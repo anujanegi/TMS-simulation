@@ -5,7 +5,7 @@ from tvb.simulator.lab import models, connectivity, coupling, integrators, noise
 import numpy as np
 
 
-def get_brain_models():
+def get_brain_models(dt=2**-6):
     # Define the model
     neuron_model = models.Generic2dOscillator(a=np.array([0.3]), tau=np.array([2]))
 
@@ -18,7 +18,6 @@ def get_brain_models():
     white_matter_coupling = coupling.Difference(a=np.array([7e-4])) 
 
     # Define an integration method
-    dt = 2**-6
     heunint = integrators.HeunStochastic(dt=dt, noise=noise.Additive(nsig=np.array([5e-5])))
 
     # Define a cortical surface
