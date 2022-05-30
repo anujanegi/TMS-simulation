@@ -28,4 +28,4 @@ def get_brain_models():
     default_cortex.region_mapping_data.connectivity = white_matter
     default_cortex.configure()
     
-    return neuron_model, heunint, default_cortex
+    return neuron_model, heunint, default_cortex, white_matter
