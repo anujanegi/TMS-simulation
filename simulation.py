@@ -1,5 +1,6 @@
 """Code utils to define and configre TVB objects required to run a simulation.
 """
+from time import time as zeit
 
 from tvb.simulator.lab import (
     models,
@@ -10,6 +11,7 @@ from tvb.simulator.lab import (
     cortex,
     local_connectivity,
     monitors,
+    simulator,
 )
 import numpy as np
 
@@ -42,6 +44,7 @@ def get_brain_models(dt=2 ** -6):
 
 
 def get_monitors(monitors_needed=["eeg"], **kwargs):
+    """Current options are "raw", "tavg", "savg", "eeg" and "bold"."""
     all_mons = []
     if "raw" in monitors_needed:
         mon_raw = monitors.Raw()
@@ -60,3 +63,30 @@ def get_monitors(monitors_needed=["eeg"], **kwargs):
         all_mons.append(mon_bold)
 
     return all_mons
+
+
+def run_simulation(
+    sim, duration, monitor_list
+):  # Run the simulation - ADAPTED FROM OTHER SURFACE SIMULATION JNB
+    start_time = zeit()
+
+    monitor_data = {monitor: {"time": [], "data": []} for monitor in monitor_list}
+    idx = list(range(len(monitor_list)))
+
+    for data in sim(simulation_length=duration):
+        for i in idx:
+            if not data[i] is None:
+                monitor_data[monitor_list[i]]["time"].append(data[i][0])
+                monitor_data[monitor_list[i]]["data"].append(data[i][1])
+
+    # convert lists to numpy
+    for i in idx:
+        monitor_data[monitor_list[i]]["time"] = np.array(
+            monitor_data[monitor_list[i]]["time"]
+        )
+        monitor_data[monitor_list[i]]["data"] = np.array(
+            monitor_data[monitor_list[i]]["data"]
+        )
+
+    print("The simulation took {}s to run".format(round((zeit() - start_time), 1)))
+    return monitor_data
