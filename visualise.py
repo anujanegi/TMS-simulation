@@ -139,3 +139,21 @@ def plot_eeg_comparison(EEG_A, EEG_B, duration, title="EEG", labels=["RS", "TMS"
     plt.axvspan(1500, duration, color="whitesmoke")  # stimuli span
     plt.legend()
     plt.show()
+
+
+def plot_TEP(data, EOI=[3, 41, 42, 58], stimuli_onset=1500, stimulus="TMS"):
+    eeg_time = data["time"]
+    EEG = data["data"]
+    plt.figure(figsize=(11, 3))
+
+    plt.plot(eeg_time, EEG[:, 0, EOI, 0], "k", alpha=0.1)
+    plt.plot(eeg_time, EEG[:, 0, EOI, 0].mean(axis=1), "r", alpha=1)  # EOIs
+
+    plt.title("TEP for %s" % stimulus)
+    plt.xlabel("Time (ms)")
+    plt.xlim(stimuli_onset, stimuli_onset + 300)
+
+    plt.axvline(x=1500 + 200, color="g", linestyle="--", label="P200")  # P200
+    plt.axvline(x=1500 + 120, color="m", linestyle="--", label="N120")  # N100
+    plt.legend()
+    plt.show()
