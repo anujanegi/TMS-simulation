@@ -50,7 +50,9 @@ def plot_stimulus(stimulus, position, type=""):
         plt.show()
 
 
-def plot_monitor_data(monitor_data, monitor_list, EOI=[3, 41, 42, 58], EOI_labels=None):
+def plot_monitor_data(
+    monitor_data, monitor_list, duration, EOI=[3, 41, 42, 58], EOI_labels=None
+):
     if EOI_labels is None:
         EOI_labels = [str(i) for i in EOI]
 
@@ -62,22 +64,22 @@ def plot_monitor_data(monitor_data, monitor_list, EOI=[3, 41, 42, 58], EOI_label
         plt.plot(tavg_time, TAVG[:, 0, :, 0].mean(axis=1), "r", alpha=1)
         plt.title("Temporal average")
         plt.xlabel("Time (ms)")
-        plt.axis([1000, len(tavg_time), -1.2, 2.4])
-        plt.axvspan(1500, len(tavg_time), color="whitesmoke")  # stimuli span
+        plt.axis([1000, duration, -1.2, 2.4])
+        plt.axvspan(1500, duration, color="whitesmoke")  # stimuli span
         plt.show()
 
-    elif "savg" in monitor_list:
+    if "savg" in monitor_list:
         savg_time, SAVG = monitor_data["savg"]["time"], monitor_data["savg"]["data"]
 
         plt.figure(figsize=(11, 3))
         plt.plot(savg_time, SAVG[:, 0, :, 0])
         plt.title("Spatial average")
         plt.xlabel("Time (ms)")
-        plt.xlim(1000, len(tavg_time))
-        plt.axvspan(1500, len(tavg_time), color="whitesmoke")  # stimuli span
+        plt.xlim(1000, duration)
+        plt.axvspan(1500, duration, color="whitesmoke")  # stimuli span
         plt.show()
 
-    elif "eeg" in monitor_list:
+    if "eeg" in monitor_list:
         eeg_time, EEG = monitor_data["eeg"]["time"], monitor_data["eeg"]["data"]
 
         plt.figure(figsize=(11, 3))
@@ -85,19 +87,55 @@ def plot_monitor_data(monitor_data, monitor_list, EOI=[3, 41, 42, 58], EOI_label
         plt.plot(eeg_time, EEG[:, 0, EOI, 0], alpha=1, label=EOI_labels)  # EOIs
         plt.title("EEG")
         plt.xlabel("Time (ms)")
-        plt.xlim(1000, len(tavg_time))
-        plt.axvspan(1500, len(tavg_time), color="whitesmoke")  # stimuli span
+        plt.xlim(1000, duration)
+        plt.axvspan(1500, duration, color="whitesmoke")  # stimuli span
         plt.legend()
         plt.show()
 
-    elif "bold" in monitor_list:
+    if "bold" in monitor_list:
         bold_time, BOLD = monitor_data["bold"]["time"], monitor_data["bold"]["data"]
 
         plt.figure(figsize=(11, 3))
         plt.plot(bold_time, BOLD[:, 0, :, 0], "k", alpha=0.1)
         plt.plot(bold_time, BOLD[:, 0, EOI, 0], alpha=1, label=EOI_labels)  # EOIs
         plt.title("BOLD")
-        plt.xlim(1000, len(tavg_time))
-        plt.axvspan(1500, len(tavg_time), color="whitesmoke")  # stimuli span
+        plt.xlim(1000, duration)
+        plt.axvspan(1500, duration, color="whitesmoke")  # stimuli span
         plt.legend()
         plt.show()
+
+
+def plot_eeg_comparison(EEG_A, EEG_B, duration, title="EEG", labels=["RS", "TMS"]):
+    """Plots EOI EEG data from 2 different simulations.
+
+    Args:
+        EEG_A (_type_): EEG monitor data from simulation A
+        EEG_B (_type_): EEG monitor data from simulation A
+    """
+
+    eeg_time = EEG_A["time"]
+    EEG_A, EEG_B = EEG_A["data"], EEG_B["data"]
+
+    plt.figure(figsize=(11, 3))
+    plt.plot(eeg_time, EEG_A[:, 0, [3, 41, 42, 58], 0], "powderblue", alpha=1)  # EOIs
+    plt.plot(
+        eeg_time,
+        EEG_A[:, 0, [3, 41, 42, 58], 0].mean(axis=1),
+        "b",
+        alpha=1,
+        label=labels[0],
+    )  # EOIs
+    plt.plot(eeg_time, EEG_B[:, 0, [3, 41, 42, 58], 0], "mistyrose", alpha=1)  # EOIs
+    plt.plot(
+        eeg_time,
+        EEG_B[:, 0, [3, 41, 42, 58], 0].mean(axis=1),
+        "r",
+        alpha=1,
+        label=labels[1],
+    )  # EOIs
+    plt.title(title)
+    plt.xlabel("Time (ms)")
+    plt.xlim(1400, duration)
+    plt.axvspan(1500, duration, color="whitesmoke")  # stimuli span
+    plt.legend()
+    plt.show()
