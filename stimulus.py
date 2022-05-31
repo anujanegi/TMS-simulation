@@ -40,12 +40,12 @@ def get_stimulus(weighting, connectivity, duration=2.5e3, dt=2 ** -6, type="rTMS
     Args:
         type (str, optional): Options are dummy, rTMS and iTBS. Defaults to 'rTMS'.
     """
-    if type == "dummy":
+    if type == "SinglePulse":
         # Define the stimulus' temporal profile
         eqn_t = equations.PulseTrain()
         eqn_t.parameters["onset"] = 1.5e3  # Delay from beginning of sim [ms]
-        eqn_t.parameters["T"] = 1000.0  # Frequency of pulse train [ms]
-        eqn_t.parameters["tau"] = 1000.0  # Period of pulse train [ms]
+        eqn_t.parameters["T"] = 5000.0  # Frequency of pulse train [ms]
+        eqn_t.parameters["tau"] = 5.0  # Period of pulse train [ms]
         eqn_t.parameters.update()
 
         # Create an object to stimulate the desired regions
