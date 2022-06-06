@@ -193,7 +193,7 @@ def plot_surface_mpl(
     datatypes.
 
     See also:  plot_surface_mpl_mv
-
+    taken from https://nbviewer.jupyter.org/urls/s3.amazonaws.com/replicating_spiegler2016/replicating_spiegler2016__html_nb.ipynb).
 
 
     Parameters
