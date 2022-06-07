@@ -12,7 +12,7 @@ from tvb.simulator.plot.tools import plot_pattern
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
     plt.plot(x_positions, y_positions, "-o")
     plt.title("%s coil" % coil_type)
-    plt.plot()
+    plt.show()
 
 
 def plot_coil_on_cortical_surface(coil, ind, cortex, title=""):
