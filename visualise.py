@@ -34,7 +34,7 @@ def plot_coil_on_cortical_surface(coil, ind, cortex, title=""):
     plt.show()
 
 
-def plot_stimulus(stimulus, position, type=""):
+def plot_stimulus(stimulus, position="", type=""):
     if type == "iTBS":
         plt.imshow(stimulus(), interpolation="none", aspect="auto")
         plt.xlabel("Time")
