@@ -1,6 +1,7 @@
 """Code utils to define and configre TVB objects required to run a simulation.
 """
-from time import time as zeit
+from tvb.basic.neotraits.api import List
+
 
 from tvb.simulator.lab import (
     models,
@@ -35,7 +36,10 @@ def get_brain_models(
         )
         nsig = np.array([1e-5])
     elif NMM == "jansen_rit":
-        neuron_model = models.JansenRit(mu=np.array([0.0]), v0=np.array([6.0]))
+        class ExtendedJansenRit(models.JansenRit): # Extension to the model due to an update of TVB
+            variables_of_interest = List(of=str, label="Variables watched by Monitors", choices=(['y1-y2', 'y0','y1','y2','y3','y4','y5']), default=(['y1-y2']))
+
+        neuron_model = ExtendedJansenRit(v0=np.array([6.0]), variables_of_interest=['y1-y2'])
         phi_n_scaling = (
             neuron_model.a
             * neuron_model.A
@@ -111,7 +115,7 @@ def get_monitors(monitors_needed=["eeg"], **kwargs):
 def run_simulation(
     sim, duration, monitor_list
 ):  # Run the simulation - ADAPTED FROM OTHER SURFACE SIMULATION JNB
-    start_time = zeit()
+    # start_time = zeit()
 
     monitor_data = {monitor: {"time": [], "data": []} for monitor in monitor_list}
     idx = list(range(len(monitor_list)))
@@ -131,5 +135,5 @@ def run_simulation(
             monitor_data[monitor_list[i]]["data"]
         )
 
-    print("The simulation took {}s to run".format(round((zeit() - start_time), 1)))
+    # print("The simulation took {}s to run".format(round((zeit() - start_time), 1)))
     return monitor_data
