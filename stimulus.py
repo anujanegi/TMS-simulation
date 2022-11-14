@@ -34,7 +34,7 @@ def make_train(weighting, connectivity, **params):
     return stim
 
 
-def get_stimulus(weighting, connectivity, duration=2.5e3, dt=2 ** -6, type="rTMS"):
+def get_stimulus(weighting, connectivity, onset=1.5e3, frequency=200.0, duration=2.5e3, dt=2 ** -6, type="rTMS"):
     """Returns intialised TVB object based on stimuls type
 
     Args:
@@ -57,8 +57,8 @@ def get_stimulus(weighting, connectivity, duration=2.5e3, dt=2 ** -6, type="rTMS
         # rTMS
         # Define the stimulus' temporal profile
         eqn_t = equations.PulseTrain()
-        eqn_t.parameters["onset"] = 1.5e3  # Delay from beginning of sim [ms]
-        eqn_t.parameters["T"] = 200.0  # Frequency of pulse train [ms] #5Hz rTMS
+        eqn_t.parameters["onset"] = onset  # Delay from beginning of sim [ms]
+        eqn_t.parameters["T"] = frequency  # Frequency of pulse train [ms] #5Hz rTMS
         eqn_t.parameters["tau"] = 5.0  # Period of pulse train [ms]
         eqn_t.parameters.update()
         # Create an object to stimulate the desired regions
