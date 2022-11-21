@@ -51,6 +51,7 @@ def get_brain_models(
 
     # Define the connectivity between regions
     if path_to_SC and path_to_region_labels and path_to_tract_lenghts:
+        weights = np.log(np.loadtxt(path_to_SC)+1)
         # normalise the SC
         weights=(weights-np.min(weights))/(np.max(weights)-np.min(weights))
         white_matter = connectivity.Connectivity(
