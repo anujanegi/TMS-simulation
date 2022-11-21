@@ -51,8 +51,8 @@ def get_brain_models(
 
     # Define the connectivity between regions
     if path_to_SC and path_to_region_labels and path_to_tract_lenghts:
-        weights=np.log(np.loadtxt(path_to_SC)+1) # SCnew = log(SC+1)
-        weights=weights/weights.max() # Normalize
+        # normalise the SC
+        weights=(weights-np.min(weights))/(np.max(weights)-np.min(weights))
         white_matter = connectivity.Connectivity(
             tract_lengths=np.loadtxt(path_to_tract_lenghts),
             weights=weights,
@@ -74,11 +74,10 @@ def get_brain_models(
     white_matter_coupling.configure()
 
     # Define an integration method
-    # no noise for jansen rit
-    if NMM == "jansen_rit":
-         heunint = integrators.HeunDeterministic(dt=dt)
-    else:
-        heunint = integrators.HeunDeterministic(dt=dt, noise=noise.Additive(nsig=nsig))
+    # no noise for now
+    heunint = integrators.HeunDeterministic(dt=dt)
+    # else:
+    #     heunint = integrators.HeunDeterministic(dt=dt, noise=noise.Additive(nsig=nsig))
 
     # Define a cortical surface
     default_cortex = cortex.Cortex.from_file()
