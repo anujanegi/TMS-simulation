@@ -34,11 +34,11 @@ def plot_coil_on_cortical_surface(coil, ind, cortex, title=""):
     plt.show()
 
 
-def plot_stimulus(stimulus, position, type=""):
+def plot_stimulus(stimulus, position="", type=""):
     if type == "iTBS":
         plt.imshow(stimulus(), interpolation="none", aspect="auto")
         plt.xlabel("Time")
-        plt.title("%s Coil Position" % position)
+        plt.title("%s TMS stimulus" % position)
         plt.ylabel("Space")
         plt.colorbar()
         plt.show()
@@ -47,7 +47,7 @@ def plot_stimulus(stimulus, position, type=""):
         plot_pattern(stimulus)
         fig = plt.gcf()
         fig.set_size_inches(6, 5)
-        fig.suptitle("%s Coil Position" % position, fontsize=24, y=1.05)
+        fig.suptitle("%s TMS stimulus" % position, fontsize=24, y=1.05)
         fig.tight_layout()
         plt.show()
 

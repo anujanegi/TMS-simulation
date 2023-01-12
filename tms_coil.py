@@ -222,7 +222,7 @@ class TMS_coil:
         self.stim_strength = stim_strength
         return stim_strength
 
-    def get_stimulus_distribution(self, field_strength, region_labels, idx):
+    def get_stimulus_distribution(self, field_strength, region_labels, idx=None):
         # Create a list with number, name and stimulus weighting of each region, descending by stimulus weighting
         reg_lab = region_labels
         reg_list = []
@@ -232,11 +232,12 @@ class TMS_coil:
         zip_list = list(zip(field_strength.tolist(), reg_list, reg_lab.tolist()))
         zip_list.sort(reverse=True)
 
-        print(
-            "\033[1mStimulus distribution at chosen coil position: %s"
-            % self.pos_list[idx]
-            + "\033[0m\n"
-        )
+        if idx:
+            print(
+                "\033[1mStimulus distribution at chosen coil position: %s"
+                % self.pos_list[idx]
+                + "\033[0m\n"
+            )
         print(
             "\033[1m{0:16}{1:16}{2:16}\033[0m".format(
                 "Region index", "Region label", "Stimulus weighting"
