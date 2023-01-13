@@ -42,7 +42,7 @@ def simulatie_efield(subject, type):
     )
     # Select coil direction
     # Point the coil handle posteriorly, we just add 10 mm to the original M1 y coordinate
-    pos_ydir = simnibs.mni2subject_coords(
+    pos.pos_ydir = simnibs.mni2subject_coords(
         [-37, -21 - 10, 58], config.get_m2m_path(subject, type)
     )
 
@@ -54,8 +54,6 @@ def average_efield_over_atlas(subject, type, atlas_name="HCP_MMP1", save=True):
     """
     efield_head_mesh = read_msh(config.get_efield_head_mesh_path(subject, type))
     atlas = simnibs.subject_atlas(atlas_name, config.get_m2m_path(subject, type))
-    # Crop the mesh so we only have gray matter volume elements (tag 2 in the mesh)
-    gray_matter = efield_head_mesh.crop_mesh(2)
 
     EF_result = {}
     for areas, values in atlas.items():
@@ -65,7 +63,7 @@ def average_efield_over_atlas(subject, type, atlas_name="HCP_MMP1", save=True):
         roi = atlas[areas]
 
         # calculate nodes areas in ROI for averaging
-        node_areas = gray_matter.nodes_areas()
+        node_areas = efield_head_mesh.nodes_areas()
         if not node_areas[roi].any():
             print(areas, node_areas[roi])
             EF_result[areas] = 0
@@ -74,7 +72,7 @@ def average_efield_over_atlas(subject, type, atlas_name="HCP_MMP1", save=True):
         # Calculate mean electric field in each region
         field_name = "magnE"
         mean_normE = np.average(
-            gray_matter.field[field_name][roi], weights=node_areas[roi]
+            efield_head_mesh.field[field_name][roi], weights=node_areas[roi]
         )
         EF_result[areas] = mean_normE
 
