@@ -35,11 +35,16 @@ def simulatie_efield(subject, type):
     tmslist.fnamecoil = os.path.join("Drakaki_BrainStim_2022", "MagStim_D70.ccd")
     pos = tmslist.add_position()
 
-    # for right M1 using electrode as reference
+    # Define M1 from MNI coordinates (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2034289/)
     # Select coil centre
-    pos.centre = "FC6"  # right M1
+    pos.centre = simnibs.mni2subject_coords(
+        [-37, -21, 58], config.get_m2m_path(subject, type)
+    )
     # Select coil direction
-    pos.pos_ydir = "AF8"
+    # Point the coil handle posteriorly, we just add 10 mm to the original M1 y coordinate
+    pos_ydir = simnibs.mni2subject_coords(
+        [-37, -21 - 10, 58], config.get_m2m_path(subject, type)
+    )
 
     run_simnibs(s)
 
@@ -92,5 +97,5 @@ if __name__ == "__main__":
 
     for type in config.subjects:
         for subject in config.subjects[type]:
-            # simulatie_efield(subject, type)
+            simulatie_efield(subject, type)
             average_efield_over_atlas(subject, type)
