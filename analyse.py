@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     if "efield_group_diff" in list_of_args:
         efield_group_difference(config.subjects)
-    if "-help" in list_of_args:
+    else:
         print("Supported commands:")
         print(
             "efield_group_diff: calculate the difference between the efields of the different subject types"
