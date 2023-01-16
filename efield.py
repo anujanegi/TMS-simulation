@@ -21,7 +21,7 @@ def simulate_efield(subject, type):
     s.pathfem = os.path.join(config.get_subject_path(subject, type), "TMS_efield")
     s.fields = "e"
     s.map_to_surf = True
-    # s.map_to_fsavg = True
+    s.map_to_fsavg = True
     s.map_to_MNI = True
     s.open_in_gmsh = False
 
