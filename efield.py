@@ -11,7 +11,7 @@ from numpy import degrees, arcsin, arctan2, deg2rad, cos, sin
 import config
 
 
-def simulatie_efield(subject, type):
+def simulate_efield(subject, type):
 
     # Initalize a session
     s = sim_struct.SESSION()
@@ -50,8 +50,7 @@ def simulatie_efield(subject, type):
 
 
 def average_efield_over_atlas(subject, type, atlas_name="HCP_MMP1", save=True):
-    """Average the efield over the given atlas
-    """
+    """Average the efield over the given atlas"""
     efield_head_mesh = read_msh(config.get_efield_head_mesh_path(subject, type))
     atlas = simnibs.subject_atlas(atlas_name, config.get_m2m_path(subject, type))
 
@@ -95,5 +94,5 @@ if __name__ == "__main__":
 
     for type in config.subjects:
         for subject in config.subjects[type]:
-            simulatie_efield(subject, type)
+            simulate_efield(subject, type)
             average_efield_over_atlas(subject, type)
