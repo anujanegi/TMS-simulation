@@ -10,6 +10,7 @@ def get_m2m_path(subject, type):
 
 # get efield head mesh path
 def get_efield_head_mesh_path(subject, type):
+    # Read the simulation result mapped to the gray matter surface
     return os.path.join(
         data_path,
         type,
@@ -18,6 +19,7 @@ def get_efield_head_mesh_path(subject, type):
         "subject_overlays",
         f"{subject[-4:]}_TMS_1-0001_MagStim_D70_scalar_central.msh",
     )
+
 
 # get efield transformed to fsavg pace head mesh path
 def get_efield_fsavg_overlay_mesh_path(subject, type):
@@ -30,9 +32,14 @@ def get_efield_fsavg_overlay_mesh_path(subject, type):
         f"{subject[-4:]}_TMS_1-0001_MagStim_D70_scalar_fsavg.msh",
     )
 
+
 def get_TMS_efield_path(subject, type):
     return os.path.join(data_path, type, subject, "TMS_efield")
 
 
 def get_subject_path(subject, type):
     return os.path.join(data_path, type, subject)
+
+
+def get_analysis_path():
+    return os.path.join(data_path, "analysis")

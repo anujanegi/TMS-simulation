@@ -1,7 +1,7 @@
 """This script simulated the electric field for a subjects head model
 """
 
-from simnibs import sim_struct, run_simnibs, read_msh, SIMNIBSDIR
+from simnibs import sim_struct, run_simnibs, read_msh
 import simnibs
 import nilearn.image as img
 import nilearn.plotting as niplot
@@ -41,7 +41,7 @@ def simulate_efield(subject, type):
         [-37, -21, 58], config.get_m2m_path(subject, type)
     )
     # Select coil direction
-    # Point the coil handle posteriorly, we just add 10 mm to the original M1 y coordinate
+    # Point the coil handle posteriorly, just add 10 mm to the original M1 y coordinate
     pos.pos_ydir = simnibs.mni2subject_coords(
         [-37, -21 - 10, 58], config.get_m2m_path(subject, type)
     )
@@ -49,7 +49,9 @@ def simulate_efield(subject, type):
     run_simnibs(s)
 
 
-def average_efield_over_atlas(subject, type, atlas_name="HCP_MMP1", save=True):
+def average_efield_over_atlas(
+    subject, type, atlas_name="HCP_MMP1", save=True, field_name="magnE"
+):
     """Average the efield over the given atlas"""
     efield_head_mesh = read_msh(config.get_efield_head_mesh_path(subject, type))
     atlas = simnibs.subject_atlas(atlas_name, config.get_m2m_path(subject, type))
@@ -69,7 +71,6 @@ def average_efield_over_atlas(subject, type, atlas_name="HCP_MMP1", save=True):
             continue
 
         # Calculate mean electric field in each region
-        field_name = "magnE"
         mean_normE = np.average(
             efield_head_mesh.field[field_name][roi], weights=node_areas[roi]
         )
