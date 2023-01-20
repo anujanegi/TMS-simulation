@@ -1,6 +1,7 @@
 """Visualisation.
 """
 
+import sys
 import numpy as np
 from re import S
 import matplotlib.pyplot as plt
@@ -484,3 +485,54 @@ def plot_activity_on_brain(vtx, tri, rm, monitor_data, time_stamps, title=""):
 
         ax[0][t_it].set_title("t=%1.1fms" % time[t])
     fig.suptitle(title, fontsize=15)
+
+
+def plot_magnE_on_subject(subject, type):
+    mesh = pv.read(config.get_efield_head_mesh_path(subject, type))
+    p = pv.Plotter(window_size=[800, 800], off_screen=True)
+    sargs = {"color": "black", "title": "E-field magnitude"}
+    p.add_mesh(
+        mesh, scalars="magnE", cmap="rainbow", clim=[0, 2], scalar_bar_args=sargs
+    )
+    p.background_color = "white"
+    p.set_position([-390, 22, 233])
+    p.camera.roll = 100
+    p.add_text(
+        f"Simulated TMS E-field magnitude for {type}[{subject}]",
+        font_size=10,
+        color="black",
+        position="upper_edge",
+    )
+    p.screenshot(
+        os.path.join(config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png")
+    )
+
+
+# def plot_magnE_on_fsaverage(subject, type):
+#     mesh = pv.read(config.get_efield_fsavg_overlay_mesh_path(subject, type))
+#     p = pv.Plotter(window_size=[800, 800])
+#     sargs={'color': 'black', 'title': 'E-field magnitude'}
+#     p.add_mesh(mesh, scalars='magnE', cmap='rainbow', clim=[0, 2], scalar_bar_args=sargs)
+#     p.background_color = 'white'
+#     p.set_position([-390, 22, 233])
+#     p.camera.roll = 100
+#     p.add_text(f'Simulated TMS E-field magnitude for {type}[{subject}] on FsAverage', font_size=10, color='black', position='upper_edge')
+#     p.screenshot(os.path.join(config.get_TMS_efield_path(subject, type), f'{subject}_magnE.png'))
+
+if __name__ == "__main__":
+
+    list_of_args = sys.argv[1:]
+
+    if "plot_magnE_on_subject" in list_of_args:
+        import pyvista as pv
+        import config
+        import os
+
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                plot_magnE_on_subject(subject, type)
+    else:
+        print("Supported options:")
+        print(
+            "plot_magnE_on_subject: plots the magnitude of the E-field on the subject head"
+        )
