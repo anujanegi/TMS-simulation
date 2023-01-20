@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from matplotlib.tri import Triangulation
 import matplotlib.cm as cm
 from tvb.simulator.plot.tools import plot_pattern
+import pyvista as pv
+import config
+import os
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -506,33 +509,49 @@ def plot_magnE_on_subject(subject, type):
     p.screenshot(
         os.path.join(config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png")
     )
+    print("Saved", subject)
 
 
-# def plot_magnE_on_fsaverage(subject, type):
-#     mesh = pv.read(config.get_efield_fsavg_overlay_mesh_path(subject, type))
-#     p = pv.Plotter(window_size=[800, 800])
-#     sargs={'color': 'black', 'title': 'E-field magnitude'}
-#     p.add_mesh(mesh, scalars='magnE', cmap='rainbow', clim=[0, 2], scalar_bar_args=sargs)
-#     p.background_color = 'white'
-#     p.set_position([-390, 22, 233])
-#     p.camera.roll = 100
-#     p.add_text(f'Simulated TMS E-field magnitude for {type}[{subject}] on FsAverage', font_size=10, color='black', position='upper_edge')
-#     p.screenshot(os.path.join(config.get_TMS_efield_path(subject, type), f'{subject}_magnE.png'))
+def plot_msh(path, scalar_name, title=None, save_path="./"):
+    mesh = pv.read(path)
+    title = scalar_name if title is None else title
+    p = pv.Plotter(window_size=[800, 800], off_screen=True)
+    sargs = {"color": "black", "title": title}
+    p.add_mesh(mesh, scalars=scalar_name, cmap="seismic", scalar_bar_args=sargs)
+    p.background_color = "white"
+    p.set_position([-390, 22, 233])
+    p.camera.roll = 100
+    p.screenshot(os.path.join(save_path, f"{title}.png"))
+    print("Saved", title)
+
 
 if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
 
     if "plot_magnE_on_subject" in list_of_args:
-        import pyvista as pv
-        import config
-        import os
 
         for type in config.subjects:
             for subject in config.subjects[type]:
                 plot_magnE_on_subject(subject, type)
+    if "plot_efield_difference_between_groups" in list_of_args:
+        mesh_list = [
+            fname
+            for fname in os.listdir(config.get_analysis_path())
+            if fname.endswith(".msh") and "difference" in fname
+        ]
+        for mesh in mesh_list:
+            plot_msh(
+                os.path.join(config.get_analysis_path(), mesh),
+                mesh[:-4],
+                title=mesh[:-4],
+                save_path=config.get_analysis_path(),
+            )
     else:
         print("Supported options:")
         print(
             "plot_magnE_on_subject: plots the magnitude of the E-field on the subject head"
+        )
+        print(
+            "plot_efield_difference_between_groups: plots the difference between the E-field magnitude for the two groups on an Fsaverage head"
         )

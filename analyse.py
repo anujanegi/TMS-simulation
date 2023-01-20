@@ -47,6 +47,13 @@ def efield_group_difference(subjects, field_name="magnE"):
             visible_fields=f"{field_name}_difference_{combination[1]}_{combination[0]}"
         ).show()
 
+        results_fsavg.write(
+            os.path.join(
+                config.get_analysis_path(),
+                f"{field_name}_difference_{combination[1]}_{combination[0]}.msh",
+            )
+        )
+
 
 if __name__ == "__main__":
 
