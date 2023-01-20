@@ -497,7 +497,6 @@ def plot_magnE_on_subject(subject, type):
     p.add_mesh(
         mesh, scalars="magnE", cmap="rainbow", clim=[0, 2], scalar_bar_args=sargs
     )
-    p.background_color = "white"
     p.set_position([-390, 22, 233])
     p.camera.roll = 100
     p.add_text(
@@ -507,7 +506,8 @@ def plot_magnE_on_subject(subject, type):
         position="upper_edge",
     )
     p.screenshot(
-        os.path.join(config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png")
+        os.path.join(config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png"),
+        transparent_background=True,
     )
     print("Saved", subject)
 
@@ -518,10 +518,9 @@ def plot_msh(path, scalar_name, title=None, save_path="./"):
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
     sargs = {"color": "black", "title": title}
     p.add_mesh(mesh, scalars=scalar_name, cmap="seismic", scalar_bar_args=sargs)
-    p.background_color = "white"
     p.set_position([-390, 22, 233])
     p.camera.roll = 100
-    p.screenshot(os.path.join(save_path, f"{title}.png"))
+    p.screenshot(os.path.join(save_path, f"{title}.png"), transparent_background=True)
     print("Saved", title)
 
 
@@ -534,7 +533,7 @@ if __name__ == "__main__":
         for type in config.subjects:
             for subject in config.subjects[type]:
                 plot_magnE_on_subject(subject, type)
-    if "plot_efield_difference_between_groups" in list_of_args:
+    elif "plot_efield_difference_between_groups" in list_of_args:
         mesh_list = [
             fname
             for fname in os.listdir(config.get_analysis_path())
