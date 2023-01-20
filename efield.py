@@ -27,6 +27,10 @@ def simulate_efield(subject, type):
 
     if not os.path.exists(s.pathfem):
         os.makedirs(s.pathfem)
+    # delete all .mat files in the folder
+    for f in os.listdir(s.pathfem):
+        if f.endswith(".mat"):
+            os.remove(os.path.join(s.pathfem, f))
 
     # coil model
     # Initialize a list of TMS simulations
@@ -92,7 +96,8 @@ def average_efield_over_atlas(
 
 
 if __name__ == "__main__":
-
+    # simulates and saves the electric field for all subjects given in config.subjects
+    # saves eflield average over atlas in json file
     for type in config.subjects:
         for subject in config.subjects[type]:
             simulate_efield(subject, type)
