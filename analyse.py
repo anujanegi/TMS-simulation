@@ -59,10 +59,10 @@ if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
 
-    if "efield_group_diff" in list_of_args:
+    if "efield_group_diff_over_fsavg" in list_of_args:
         efield_group_difference(config.subjects)
     else:
         print("Supported commands:")
         print(
-            "efield_group_diff: calculate the difference between the efields of the different subject types"
+            "efield_group_diff_over_fsavg: calculate the difference between the efields of the different subject types"
         )
