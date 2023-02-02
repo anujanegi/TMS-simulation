@@ -1,6 +1,7 @@
 import os
 
-data_path = "/home/anujanegi/tj/TMS-simulation/data/ADNI"
+data_path = "/home/anujanegi/tj/TMS-simulation/data"
+dataset_path = "/home/anujanegi/tj/TMS-simulation/data/ADNI"
 subjects = {
     "AD": ["011_S_4547", "036_S_4715", "041_S_4974", "114_S_6039", "168_S_6142"],
     "MCI": ["002_S_1155", "002_S_4229", "002_S_4654", "002_S_1261", "003_S_1122"],
@@ -9,14 +10,14 @@ subjects = {
 
 
 def get_m2m_path(subject, type):
-    return os.path.join(data_path, type, subject, f"m2m_{subject[-4:]}")
+    return os.path.join(dataset_path, type, subject, f"m2m_{subject[-4:]}")
 
 
 # get efield head mesh path
 def get_efield_head_mesh_path(subject, type):
     # Read the simulation result mapped to the gray matter surface
     return os.path.join(
-        data_path,
+        dataset_path,
         type,
         subject,
         "TMS_efield",
@@ -28,7 +29,7 @@ def get_efield_head_mesh_path(subject, type):
 # get efield transformed to fsavg pace head mesh path
 def get_efield_fsavg_overlay_mesh_path(subject, type):
     return os.path.join(
-        data_path,
+        dataset_path,
         type,
         subject,
         "TMS_efield",
@@ -37,13 +38,28 @@ def get_efield_fsavg_overlay_mesh_path(subject, type):
     )
 
 
+# get efield json for subject averaged over atlas path
+def get_efield_atlas_avg_path(subject, type, atlas="HCP_MMP1", efield_type="magnE"):
+    return os.path.join(
+        dataset_path,
+        type,
+        subject,
+        "TMS_efield",
+        f"{subject}_efield_over_{atlas}_{efield_type}.json",
+    )
+
+
 def get_TMS_efield_path(subject, type):
-    return os.path.join(data_path, type, subject, "TMS_efield")
+    return os.path.join(dataset_path, type, subject, "TMS_efield")
 
 
 def get_subject_path(subject, type):
-    return os.path.join(data_path, type, subject)
+    return os.path.join(dataset_path, type, subject)
 
 
 def get_analysis_path():
-    return os.path.join(data_path, "analysis")
+    return os.path.join(dataset_path, "analysis")
+
+
+def get_glasser_msh_path():
+    return os.path.join(data_path, "Glasser_adapted_1_edit")
