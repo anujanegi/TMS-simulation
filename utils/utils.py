@@ -1,4 +1,6 @@
 import numpy as np
+import config
+import json
 
 
 def baseline_correction(data, time_interval=[1000, 1450]):
@@ -20,3 +22,14 @@ def baseline_correction(data, time_interval=[1000, 1450]):
         return data
     else:
         raise ValueError("No EEG monitor data found!")
+
+
+def get_max_efield_on_atlas():
+    max_values = []
+    for type in config.subjects:
+        for subject in config.subjects[type]:
+            with open(config.get_efield_atlas_avg_path(subject, type)) as f:
+                efield = json.load(f)
+                max_values.append(max(efield.values()))
+
+    return max(max_values)

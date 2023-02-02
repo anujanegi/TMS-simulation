@@ -11,6 +11,9 @@ from tvb.simulator.plot.tools import plot_pattern
 import pyvista as pv
 import config
 import os
+import simnibs
+import json
+import utils.utils as utils
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -512,12 +515,60 @@ def plot_magnE_on_subject(subject, type):
     print("Saved", subject)
 
 
-def plot_msh(path, scalar_name, title=None, save_path="./"):
-    mesh = pv.read(path)
+def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", lim=1.2):
+    # load .json efield averaged over the atlas
+    with open(config.get_efield_atlas_avg_path(subject, type), "r") as f:
+        efield_avg_atlas = json.load(f)
+    ef_idxRegions = efield_avg_atlas.copy()
+    ef_idxRegions = {
+        "L_" + k[3:] if "lh." in k else "R_" + k[3:]: v
+        for k, v in ef_idxRegions.items()
+    }
+    efield = [0]
+    for key in ef_idxRegions:
+        efield.append(ef_idxRegions[key])
+    efield.insert(181, 0)  # region 0 and 181 are left and right subcortical areas
+
+    # generate a glasser msh
+    dir = config.get_glasser_msh_path()
+    rl = np.loadtxt(os.path.join(dir, "_regions.txt"), dtype=str)
+    ls_mesh = []
+    for reg in rl:
+        mesh = pv.read(os.path.join(dir, str(reg)))
+        ls_mesh.append(mesh)
+
+    for i in range(len(ls_mesh)):
+        ls_mesh[i].cell_data["data"] = efield[i]
+
+    p = pv.Plotter(window_size=[800, 800], off_screen=True)
+    sargs = {"color": "black", "title": "E-field magnitude"}
+    for mesh in ls_mesh:
+        p.add_mesh(
+            mesh, scalars="data", cmap="rainbow", clim=[0, lim], scalar_bar_args=sargs
+        )
+    p.set_position((-636.8788313247771, 260.8234002669858, -159.77554337651176))
+    p.add_text(
+        f"Simulated TMS E-field magnitude for {type}[{subject}] avergaed over {atlas_name}",
+        font_size=10,
+        color="black",
+        position="upper_edge",
+    )
+    p.screenshot(
+        os.path.join(
+            config.get_TMS_efield_path(subject, type),
+            f"{subject} magnE over {atlas_name}.png",
+        ),
+        transparent_background=True,
+    )
+    print("Saving", subject)
+
+
+def plot_msh(meshes, scalar_name, title=None, save_path="./"):
     title = scalar_name if title is None else title
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
     sargs = {"color": "black", "title": title}
-    p.add_mesh(mesh, scalars=scalar_name, cmap="seismic", scalar_bar_args=sargs)
+    for mesh in meshes:
+        p.add_mesh(mesh, scalars=scalar_name, cmap="seismic", scalar_bar_args=sargs)
     p.set_position([-390, 22, 233])
     p.camera.roll = 100
     p.screenshot(os.path.join(save_path, f"{title}.png"), transparent_background=True)
@@ -529,10 +580,17 @@ if __name__ == "__main__":
     list_of_args = sys.argv[1:]
 
     if "plot_magnE_on_subject" in list_of_args:
-
         for type in config.subjects:
             for subject in config.subjects[type]:
                 plot_magnE_on_subject(subject, type)
+
+    elif "plot_subjects_magnE_on_atlas" in list_of_args:
+
+        limit = utils.get_max_efield_on_atlas()
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                plot_magnE_on_atlas(subject, type, lim=limit)
+
     elif "plot_efield_difference_between_groups" in list_of_args:
         mesh_list = [
             fname
@@ -541,7 +599,7 @@ if __name__ == "__main__":
         ]
         for mesh in mesh_list:
             plot_msh(
-                os.path.join(config.get_analysis_path(), mesh),
+                pv.read(os.path.join(config.get_analysis_path(), mesh)),
                 mesh[:-4],
                 title=mesh[:-4],
                 save_path=config.get_analysis_path(),
@@ -553,4 +611,7 @@ if __name__ == "__main__":
         )
         print(
             "plot_efield_difference_between_groups: plots the difference between the E-field magnitude for the two groups on an Fsaverage head"
+        )
+        print(
+            "plot_subjects_magnE_on_atlas: plots the magnitude of the E-field on the fsavg head for a specific atlas"
         )
