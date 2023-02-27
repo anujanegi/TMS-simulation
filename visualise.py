@@ -626,10 +626,14 @@ if __name__ == "__main__":
             "plot_magnE_on_subject: plots the magnitude of the E-field on the subject head"
         )
         print(
-            "plot_efield_difference_between_groups: plots the difference between the E-field magnitude for the two groups on an Fsaverage head"
+            "plot_subjects_magnE_on_fsaverage: plots the magnitude of the E-field on the fsavg head for all subjects"
         )
         print(
-            "plot_subjects_magnE_on_atlas: plots the magnitude of the E-field on the fsavg head for a specific atlas"
+            "plot_subjects_magnE_on_atlas: plots the magnitude of the E-field on the fsavg head for a specific atlas for all subjects"
         )
+        print(
+            "plot_efield_difference_between_groups: plots the difference between the E-field magnitude for the two groups on an Fsaverage head"
+        )
+
 
 # TODO: refactor this code to functions of repeating code eg. plot msh
