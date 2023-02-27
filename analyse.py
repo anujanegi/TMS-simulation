@@ -36,12 +36,12 @@ def efield_group_stats_over_fsavg(subjects, field_name="magnE", show=False):
         # plot the average
         results_fsavg.nodedata = []  # cleanup fields
         results_fsavg.add_node_field(
-            averaged_efields[subject_type], f"{field_name}_avg_{subject_type}"
+            averaged_efields[subject_type], "avg"
         )  # add avg field
 
         if show:
             # show surface with the fields average
-            results_fsavg.view(visible_fields=f"{field_name}_avg_{subject_type}").show()
+            results_fsavg.view(visible_fields="avg").show()
         results_fsavg.write(
             os.path.join(
                 config.get_analysis_data_path(),
@@ -54,12 +54,10 @@ def efield_group_stats_over_fsavg(subjects, field_name="magnE", show=False):
 
         # plot the std
         results_fsavg.nodedata = []  # cleanup fields
-        results_fsavg.add_node_field(
-            std_efields[subject_type], f"{field_name}_std_{subject_type}"
-        )  # add std field
+        results_fsavg.add_node_field(std_efields[subject_type], "std")  # add std field
         if show:
             # show surface with the fields std
-            results_fsavg.view(visible_fields=f"{field_name}_std_{subject_type}").show()
+            results_fsavg.view(visible_fields="std").show()
         results_fsavg.write(
             os.path.join(
                 config.get_analysis_data_path(),
@@ -126,7 +124,7 @@ def efield_group_stats_over_atlas(subjects, field_name="magnE", atlas_name="HCP_
         )
 
 
-def efield_group_difference_over_fsavg(subjects, field_name="magnE"):
+def efield_group_difference_over_fsavg(subjects, field_name="magnE", show=False):
     """
     Will go through simulated efields and calculate
     the differences in the given field 
@@ -136,18 +134,16 @@ def efield_group_difference_over_fsavg(subjects, field_name="magnE"):
         subjects (_type_): dictionary of {subject type: list of subject IDS}
         field_name (str, optional): name of the field to calculate the difference for. Defaults to "magnE".
     """
-    # calculate avg efield for each subject type
+    # load average efield for each subject type
     averaged_efields = {}
     for subject_type in subjects:
-        fields = []
-        for subject in subjects[subject_type]:
-            results_fsavg = simnibs.read_msh(
-                config.get_efield_fsavg_overlay_mesh_path(subject, subject_type)
+        mesh = simnibs.read_msh(
+            os.path.join(
+                config.get_analysis_data_path(),
+                f"{field_name}_avg_{subject_type}_fsavg.msh",
             )
-            fields.append(results_fsavg.field[field_name].value)
-        fields = np.vstack(fields)
-        avg_field = np.mean(fields, axis=0)
-        averaged_efields[subject_type] = avg_field
+        )
+        averaged_efields[subject_type] = mesh.nodedata[0].value
 
     subject_type_combinations = list(combinations(subjects.keys(), 2))
     for combination in subject_type_combinations:
@@ -157,42 +153,30 @@ def efield_group_difference_over_fsavg(subjects, field_name="magnE"):
         )
         diff_field = np.diff(fields, axis=0)
         # plot the difference
-        results_fsavg.nodedata = []  # cleanup fields
-        results_fsavg.add_node_field(
+        mesh.nodedata = []  # cleanup fields
+        mesh.add_node_field(
             diff_field[0], f"{field_name}_difference_{combination[1]}_{combination[0]}"
         )  # add difference field
 
         # show surface with the fields difference
-        results_fsavg.view(
-            visible_fields=f"{field_name}_difference_{combination[1]}_{combination[0]}"
-        ).show()
+        if show:
+            mesh.view(
+                visible_fields=f"{field_name}_difference_{combination[1]}_{combination[0]}"
+            ).show()
 
-        results_fsavg.write(
+        mesh.write(
             os.path.join(
-                config.get_analysis_path(),
-                f"{field_name}_difference_{combination[1]}_{combination[0]}.msh",
+                config.get_analysis_data_path(),
+                f"{field_name}_difference_{combination[1]}_{combination[0]}_fsavg.msh",
             )
         )
+        print(f"Saved difference in fsavg space in {config.get_analysis_data_path()}")
 
 
 def efield_group_diff_over_atlas(subjects, field_name="magnE", atlas_name="HCP_MMP1"):
-    # TODO: implement
-    # write docstring
-
-    # calculate avg efield for each subject type over the given atlas
-    averaged_efields = {}
-    for subject_type in subjects:
-        fields = []
-        for subject in subjects[subject_type]:
-            results_fsavg = simnibs.read_msh(
-                config.get_efield_fsavg_overlay_mesh_path(subject, subject_type)
-            )
-            fields.append(results_fsavg.field[field_name].value)
-        fields = np.vstack(fields)
-        avg_field = np.mean(fields, axis=0)
-        averaged_efields[subject_type] = avg_field
-
-    pass
+    """
+    
+    """
 
 
 if __name__ == "__main__":
@@ -216,5 +200,5 @@ if __name__ == "__main__":
             'efield_group_stats_over_atlas: calculates the average and standard deviaion of the efield for each subject type over the given atlas (default: "HCP_MMP1")'
         )
         print(
-            "efield_group_diff_over_fsavg: calculate the difference between the efields of the different subject types"
+            "efield_group_diff_over_fsavg: calculate the difference between the efields of the different subject types in fsavg space"
         )
