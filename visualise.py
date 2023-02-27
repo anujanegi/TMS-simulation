@@ -508,11 +508,11 @@ def plot_magnE_on_subject(subject, type):
         color="black",
         position="upper_edge",
     )
-    p.screenshot(
-        os.path.join(config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png"),
-        transparent_background=True,
+    save_path = os.path.join(
+        config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png"
     )
-    print("Saved", subject)
+    p.screenshot(save_path, transparent_background=True)
+    print(f"Saved {subject} in {save_path}")
 
 
 def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", lim=1.2):
@@ -553,26 +553,37 @@ def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", lim=1.2):
         color="black",
         position="upper_edge",
     )
-    p.screenshot(
-        os.path.join(
-            config.get_TMS_efield_path(subject, type),
-            f"{subject} magnE over {atlas_name}.png",
-        ),
-        transparent_background=True,
+    save_path = os.path.join(
+        config.get_TMS_efield_path(subject, type),
+        f"{subject} magnE over {atlas_name}.png",
     )
-    print("Saving", subject)
+    p.screenshot(save_path, transparent_background=True)
+    print(f"Saved {subject} in {save_path}")
 
 
-def plot_msh(meshes, scalar_name, title=None, save_path="./"):
+# plot magnE on fsaverage
+def plot_magnE_on_fsaverage(subject, type):
+    mesh = pv.read(config.get_efield_fsavg_overlay_mesh_path(subject, type))
+    plot_msh(
+        [mesh],
+        "magnE",
+        title=f"{subject} magnE on fsaverage",
+        save_path=config.get_TMS_efield_path(subject, type),
+        plot_args={"cmap": "rainbow"},
+    )
+
+
+def plot_msh(meshes, scalar_name, title=None, save_path="./", plot_args={}):
+    cmap = "seismic" if plot_args.get("cmap") is None else plot_args["cmap"]
     title = scalar_name if title is None else title
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
     sargs = {"color": "black", "title": title}
     for mesh in meshes:
-        p.add_mesh(mesh, scalars=scalar_name, cmap="seismic", scalar_bar_args=sargs)
+        p.add_mesh(mesh, scalars=scalar_name, cmap=cmap, scalar_bar_args=sargs)
     p.set_position([-390, 22, 233])
     p.camera.roll = 100
     p.screenshot(os.path.join(save_path, f"{title}.png"), transparent_background=True)
-    print("Saved", title)
+    print(f"Saved {title} in {save_path}")
 
 
 if __name__ == "__main__":
@@ -590,6 +601,11 @@ if __name__ == "__main__":
         for type in config.subjects:
             for subject in config.subjects[type]:
                 plot_magnE_on_atlas(subject, type, lim=limit)
+
+    elif "plot_subjects_magnE_on_fsaverage" in list_of_args:
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                plot_magnE_on_fsaverage(subject, type)
 
     elif "plot_efield_difference_between_groups" in list_of_args:
         mesh_list = [
@@ -615,3 +631,5 @@ if __name__ == "__main__":
         print(
             "plot_subjects_magnE_on_atlas: plots the magnitude of the E-field on the fsavg head for a specific atlas"
         )
+
+# TODO: refactor this code to functions of repeating code eg. plot msh
