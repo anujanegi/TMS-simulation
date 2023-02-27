@@ -57,8 +57,12 @@ def get_subject_path(subject, type):
     return os.path.join(dataset_path, type, subject)
 
 
-def get_analysis_path():
-    return os.path.join(dataset_path, "analysis")
+def get_analysis_data_path():
+    return os.path.join(dataset_path, "analysis", "data")
+
+
+def get_analysis_fig_path():
+    return os.path.join(dataset_path, "analysis", "figures")
 
 
 def get_glasser_msh_path():
