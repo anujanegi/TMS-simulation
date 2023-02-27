@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import numpy as np
+import pandas as pd
 import simnibs
 import config
 from itertools import combinations
@@ -92,8 +93,6 @@ def efield_group_stats_over_atlas(subjects, field_name="magnE", atlas_name="HCP_
                 results_atlas = json.load(f)
             fields.append(results_atlas)  # collecting json dicts as a list
 
-        import pandas as pd
-
         fields_df = pd.DataFrame(fields)
         averaged_efields[subject_type] = dict(fields_df.mean())
         std_efields[subject_type] = dict(fields_df.std())
@@ -126,7 +125,7 @@ def efield_group_stats_over_atlas(subjects, field_name="magnE", atlas_name="HCP_
 
 def efield_group_difference_over_fsavg(subjects, field_name="magnE", show=False):
     """
-    Will go through simulated efields and calculate
+    Will go through group averaged efields and calculate
     the differences in the given field 
     of the electric field in FsAverage space
 
@@ -134,7 +133,7 @@ def efield_group_difference_over_fsavg(subjects, field_name="magnE", show=False)
         subjects (_type_): dictionary of {subject type: list of subject IDS}
         field_name (str, optional): name of the field to calculate the difference for. Defaults to "magnE".
     """
-    # load average efield for each subject type
+    # load average efield for each subject type over fsavg
     averaged_efields = {}
     for subject_type in subjects:
         mesh = simnibs.read_msh(
@@ -175,8 +174,47 @@ def efield_group_difference_over_fsavg(subjects, field_name="magnE", show=False)
 
 def efield_group_diff_over_atlas(subjects, field_name="magnE", atlas_name="HCP_MMP1"):
     """
+    Will go through group averaged efields and calculate
+    the differences in the given field
+    of the electric field in the given atlas space
     
+    Args:
+        subjects (_type_): dictionary of {subject type: list of subject IDS}
+        field_name (str, optional): name of the field to calculate the difference for. Defaults to "magnE".
+        atlas_name (str, optional): name of the atlas to calculate the difference over. Defaults to "HCP_MMP1".
     """
+    # load average efield for each subject type over atlas
+    averaged_efields = {}
+    for subject_type in subjects:
+        with open(
+            os.path.join(
+                config.get_analysis_data_path(),
+                f"{field_name}_avg_{subject_type}_{atlas_name}.json",
+            ),
+            "r",
+        ) as f:
+            averaged_efields[subject_type] = json.load(f)
+
+    subject_type_combinations = list(combinations(subjects.keys(), 2))
+    for combination in subject_type_combinations:
+        diff_field = {
+            key: averaged_efields[combination[1]][key]
+            - averaged_efields[combination[0]].get(key, 0)
+            for key in averaged_efields[combination[1]]
+        }
+
+        # save the results as json
+        with open(
+            os.path.join(
+                config.get_analysis_data_path(),
+                f"{field_name}_difference_{combination[1]}_{combination[0]}_{atlas_name}.json",
+            ),
+            "w",
+        ) as f:
+            json.dump(diff_field, f)
+        print(
+            f"Saved difference in {atlas_name} space in {config.get_analysis_data_path()}"
+        )
 
 
 if __name__ == "__main__":
@@ -190,7 +228,7 @@ if __name__ == "__main__":
     elif "efield_group_diff_over_fsavg" in list_of_args:
         efield_group_difference_over_fsavg(config.subjects)
     elif "efield_group_diff_over_atlas" in list_of_args:
-        pass
+        efield_group_diff_over_atlas(config.subjects)
     else:
         print("Supported commands:")
         print(
@@ -201,4 +239,7 @@ if __name__ == "__main__":
         )
         print(
             "efield_group_diff_over_fsavg: calculate the difference between the efields of the different subject types in fsavg space"
+        )
+        print(
+            "efield_group_diff_over_atlas: calculate the difference between the efields of the different subject types in the given atlas space"
         )
