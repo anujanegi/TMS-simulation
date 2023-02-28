@@ -33,3 +33,14 @@ def get_max_efield_on_atlas():
                 max_values.append(max(efield.values()))
 
     return max(max_values)
+
+
+def get_max_efield_in_type(type):
+    max_values = []
+    for subject in config.subjects[type]:
+        from simnibs import read_msh
+
+        mesh = read_msh(config.get_efield_head_mesh_path(subject, type))
+        max_values.append(max(mesh.nodedata[0].value))
+
+    return max(max_values)

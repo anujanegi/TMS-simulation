@@ -507,7 +507,7 @@ def _plot_msh(
     sargs = {"color": "black", "title": title}
     for mesh in meshes:
         p.add_mesh(
-            mesh, scalars=scalar_name, clim=[0], cmap=cmap, scalar_bar_args=sargs
+            mesh, scalars=scalar_name, clim=[0, limit], cmap=cmap, scalar_bar_args=sargs
         )
     # p.add_text(
     #         f"Simulated TMS E-field magnitude for {type}[{subject}]",
@@ -629,7 +629,7 @@ if __name__ == "__main__":
         for type in config.subjects:
             limit = utils.get_max_efield_in_type(type)
             for subject in config.subjects[type]:
-                plot_magnE_on_fsaverage(subject, type)
+                plot_magnE_on_fsaverage(subject, type, limit=limit)
 
     elif "plot_efield_difference_between_groups" in list_of_args:
         mesh_list = [
@@ -661,3 +661,4 @@ if __name__ == "__main__":
 
 
 # TODO: plot diff, avg, std, etc
+# TODO: check max limit for each subject type
