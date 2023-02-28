@@ -493,33 +493,41 @@ def plot_activity_on_brain(vtx, tri, rm, monitor_data, time_stamps, title=""):
     fig.suptitle(title, fontsize=15)
 
 
-def plot_magnE_on_subject(subject, type):
-    mesh = pv.read(config.get_efield_head_mesh_path(subject, type))
+def _plot_msh(
+    meshes, scalar_name, title=None, plot_args={}, save_path="./", save_name=None
+):
+    cmap = "seismic" if plot_args.get("cmap") is None else plot_args["cmap"]
+    position = plot_args.get("position")
+    camera_roll = plot_args.get("camera_roll")
+    title = scalar_name if title is None else title
+    save_name = title if save_name is None else save_name
+    lim = plot_args.get("limit")
+
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
-    sargs = {"color": "black", "title": "E-field magnitude"}
-    p.add_mesh(
-        mesh, scalars="magnE", cmap="rainbow", clim=[0, 2], scalar_bar_args=sargs
+    sargs = {"color": "black", "title": title}
+    for mesh in meshes:
+        p.add_mesh(
+            mesh, scalars=scalar_name, clim=[0], cmap=cmap, scalar_bar_args=sargs
+        )
+    # p.add_text(
+    #         f"Simulated TMS E-field magnitude for {type}[{subject}]",
+    #         font_size=10,
+    #         color="black",
+    #         position="upper_edge",
+    #     )
+    p.set_position(position)
+    p.camera.roll = camera_roll
+    p.screenshot(
+        os.path.join(save_path, f"{save_name}.png"), transparent_background=True
     )
-    p.set_position([-390, 22, 233])
-    p.camera.roll = 100
-    p.add_text(
-        f"Simulated TMS E-field magnitude for {type}[{subject}]",
-        font_size=10,
-        color="black",
-        position="upper_edge",
-    )
-    save_path = os.path.join(
-        config.get_TMS_efield_path(subject, type), f"{subject}_magnE.png"
-    )
-    p.screenshot(save_path, transparent_background=True)
-    print(f"Saved {subject} in {save_path}")
+
+    print(f"Saved {save_name} in {save_path}")
 
 
-def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", lim=1.2):
-    # load .json efield averaged over the atlas
-    with open(config.get_efield_atlas_avg_path(subject, type), "r") as f:
-        efield_avg_atlas = json.load(f)
-    ef_idxRegions = efield_avg_atlas.copy()
+def _plot_HCP_MMP1_atlas(
+    atlas_json, title=None, plot_args={}, save_path="./", save_name=None
+):
+    ef_idxRegions = atlas_json.copy()
     ef_idxRegions = {
         "L_" + k[3:] if "lh." in k else "R_" + k[3:]: v
         for k, v in ef_idxRegions.items()
@@ -540,50 +548,63 @@ def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", lim=1.2):
     for i in range(len(ls_mesh)):
         ls_mesh[i].cell_data["data"] = efield[i]
 
-    p = pv.Plotter(window_size=[800, 800], off_screen=True)
-    sargs = {"color": "black", "title": "E-field magnitude"}
-    for mesh in ls_mesh:
-        p.add_mesh(
-            mesh, scalars="data", cmap="rainbow", clim=[0, lim], scalar_bar_args=sargs
-        )
-    p.set_position((-636.8788313247771, 260.8234002669858, -159.77554337651176))
-    p.add_text(
-        f"Simulated TMS E-field magnitude for {type}[{subject}] avergaed over {atlas_name}",
-        font_size=10,
-        color="black",
-        position="upper_edge",
+    plot_args["position"] = (
+        plot_args.get("position")
+        if plot_args.get("position")
+        else (-515.2932430512969, 227.73440753777155, -153.4630638823102)
     )
-    save_path = os.path.join(
-        config.get_TMS_efield_path(subject, type),
-        f"{subject} magnE over {atlas_name}.png",
+    plot_args["camera_roll"] = (
+        plot_args.get("camera_roll") if plot_args.get("camera_roll") else -13
     )
-    p.screenshot(save_path, transparent_background=True)
-    print(f"Saved {subject} in {save_path}")
+    return _plot_msh(ls_mesh, "data", title, plot_args, save_path, save_name)
+
+
+def plot_magnE_on_subject(subject, type, limit):
+    mesh = pv.read(config.get_efield_head_mesh_path(subject, type))
+    _plot_msh(
+        [mesh],
+        "magnE",
+        title=f"E-field magnitude",
+        plot_args={
+            "limit": limit,
+            "cmap": "rainbow",
+            "position": (-471.96987340389745, 88.16278454405862, 268.98795757532633),
+            "camera_roll": 93,
+        },
+        save_path=config.get_TMS_efield_path(subject, type),
+        save_name=f"{subject}_magnE",
+    )
+
+
+def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", limit=None):
+    # load .json efield averaged over the atlas
+    with open(config.get_efield_atlas_avg_path(subject, type), "r") as f:
+        efield_avg_atlas = json.load(f)
+    return _plot_HCP_MMP1_atlas(
+        efield_avg_atlas,
+        title=f"E-field magnitude",
+        plot_args={"limit": limit, "cmap": "rainbow"},
+        save_path=config.get_TMS_efield_path(subject, type),
+        save_name=f"{subject} magnE over {atlas_name}",
+    )
 
 
 # plot magnE on fsaverage
-def plot_magnE_on_fsaverage(subject, type):
+def plot_magnE_on_fsaverage(subject, type, limit):
     mesh = pv.read(config.get_efield_fsavg_overlay_mesh_path(subject, type))
-    plot_msh(
+    _plot_msh(
         [mesh],
         "magnE",
-        title=f"{subject} magnE on fsaverage",
+        title="E-field magnitude",
         save_path=config.get_TMS_efield_path(subject, type),
-        plot_args={"cmap": "rainbow"},
+        save_name=f"{subject} magnE on fsaverage",
+        plot_args={
+            "limit": limit,
+            "cmap": "rainbow",
+            "position": (-471.96987340389745, 88.16278454405862, 268.98795757532633),
+            "camera_roll": 93,
+        },
     )
-
-
-def plot_msh(meshes, scalar_name, title=None, save_path="./", plot_args={}):
-    cmap = "seismic" if plot_args.get("cmap") is None else plot_args["cmap"]
-    title = scalar_name if title is None else title
-    p = pv.Plotter(window_size=[800, 800], off_screen=True)
-    sargs = {"color": "black", "title": title}
-    for mesh in meshes:
-        p.add_mesh(mesh, scalars=scalar_name, cmap=cmap, scalar_bar_args=sargs)
-    p.set_position([-390, 22, 233])
-    p.camera.roll = 100
-    p.screenshot(os.path.join(save_path, f"{title}.png"), transparent_background=True)
-    print(f"Saved {title} in {save_path}")
 
 
 if __name__ == "__main__":
@@ -592,18 +613,21 @@ if __name__ == "__main__":
 
     if "plot_magnE_on_subject" in list_of_args:
         for type in config.subjects:
+            limit = utils.get_max_efield_in_type(type)
             for subject in config.subjects[type]:
-                plot_magnE_on_subject(subject, type)
+                plot_magnE_on_subject(subject, type, limit=limit)
 
     elif "plot_subjects_magnE_on_atlas" in list_of_args:
 
-        limit = utils.get_max_efield_on_atlas()
+        # limit = utils.get_max_efield_on_atlas()
         for type in config.subjects:
+            limit = utils.get_max_efield_in_type(type)
             for subject in config.subjects[type]:
-                plot_magnE_on_atlas(subject, type, lim=limit)
+                plot_magnE_on_atlas(subject, type, limit=limit)
 
     elif "plot_subjects_magnE_on_fsaverage" in list_of_args:
         for type in config.subjects:
+            limit = utils.get_max_efield_in_type(type)
             for subject in config.subjects[type]:
                 plot_magnE_on_fsaverage(subject, type)
 
@@ -614,7 +638,7 @@ if __name__ == "__main__":
             if fname.endswith(".msh") and "difference" in fname
         ]
         for mesh in mesh_list:
-            plot_msh(
+            _plot_msh(
                 pv.read(os.path.join(config.get_analysis_path(), mesh)),
                 mesh[:-4],
                 title=mesh[:-4],
@@ -636,5 +660,4 @@ if __name__ == "__main__":
         )
 
 
-# TODO: refactor this code to functions of repeating code eg. plot msh
-# TODO: check colorbar limits
+# TODO: plot diff, avg, std, etc
