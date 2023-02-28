@@ -67,3 +67,10 @@ def get_analysis_fig_path():
 
 def get_glasser_msh_path():
     return os.path.join(data_path, "Glasser_adapted_1_edit")
+
+
+def get_efield_stats_path(type, efield_type="magnE", stat="avg", over="fsavg"):
+    file_type = ".msh" if over == "fsavg" else ".json"
+    return os.path.join(
+        get_analysis_data_path(), f"{efield_type}_{stat}_{type}_{over}{file_type}"
+    )

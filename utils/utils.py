@@ -44,3 +44,16 @@ def get_max_efield_in_type(type):
         max_values.append(max(mesh.nodedata[0].value))
 
     return max(max_values)
+
+
+def get_max_stat_efield_in_type(type, stat):
+    # gets the max value of the efield in the given type and stat over fsavg
+    # NOTE: between fsavg and atlas, fsavg is the one with the highest values, hence choosing fsavg
+    max_values = []
+    for subject in config.subjects[type]:
+        from simnibs import read_msh
+
+        mesh = read_msh(config.get_efield_stats_path(type, stat=stat, over="fsavg"))
+        max_values.append(max(mesh.nodedata[0].value))
+
+    return max(max_values)

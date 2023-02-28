@@ -501,7 +501,11 @@ def _plot_msh(
     camera_roll = plot_args.get("camera_roll")
     title = scalar_name if title is None else title
     save_name = title if save_name is None else save_name
-    lim = plot_args.get("limit")
+    limit = (
+        plot_args.get("limit")
+        if plot_args.get("limit")
+        else max(meshes[0][scalar_name])
+    )
 
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
     sargs = {"color": "black", "title": title}
@@ -556,7 +560,7 @@ def _plot_HCP_MMP1_atlas(
     plot_args["camera_roll"] = (
         plot_args.get("camera_roll") if plot_args.get("camera_roll") else -13
     )
-    return _plot_msh(ls_mesh, "data", title, plot_args, save_path, save_name)
+    _plot_msh(ls_mesh, "data", title, plot_args, save_path, save_name)
 
 
 def plot_magnE_on_subject(subject, type, limit):
@@ -580,7 +584,7 @@ def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", limit=None):
     # load .json efield averaged over the atlas
     with open(config.get_efield_atlas_avg_path(subject, type), "r") as f:
         efield_avg_atlas = json.load(f)
-    return _plot_HCP_MMP1_atlas(
+    _plot_HCP_MMP1_atlas(
         efield_avg_atlas,
         title=f"E-field magnitude",
         plot_args={"limit": limit, "cmap": "rainbow"},
@@ -631,6 +635,58 @@ if __name__ == "__main__":
             for subject in config.subjects[type]:
                 plot_magnE_on_fsaverage(subject, type, limit=limit)
 
+    elif "plot_group_stats_on_fsaverage" in list_of_args:
+        efield_type = "magnE"
+        stats = ["avg", "std"]
+        for type in config.subjects:
+            # get avg and std efields and plot
+            for stat in stats:
+                limit = utils.get_max_stat_efield_in_type(type, stat=stat)
+                mesh = config.get_efield_stats_path(
+                    type, stat=stat, over="fsavg", efield_type=efield_type
+                )
+                _plot_msh(
+                    [pv.read(mesh)],
+                    stat,
+                    title=f"{stat} of Efield",
+                    save_name=f"{efield_type}_{stat}_{type}_fsavg",
+                    save_path=config.get_analysis_fig_path(),
+                    plot_args={
+                        "limit": limit,
+                        "cmap": "rainbow",
+                        "position": (
+                            -471.96987340389745,
+                            88.16278454405862,
+                            268.98795757532633,
+                        ),
+                        "camera_roll": 93,
+                    },
+                )
+
+    elif "plot_group_stats_on_atlas" in list_of_args:
+        efield_type = "magnE"
+        stats = ["avg", "std"]
+        for type in config.subjects:
+            # get avg and std efields and plot
+            for stat in stats:
+                limit = utils.get_max_stat_efield_in_type(type, stat=stat)
+                with open(
+                    config.get_efield_stats_path(
+                        type, stat=stat, over="HCP_MMP1", efield_type=efield_type
+                    ),
+                    "r",
+                ) as f:
+                    efield_atlas = json.load(f)
+                _plot_HCP_MMP1_atlas(
+                    efield_atlas,
+                    title=f"{stat} of Efield",
+                    plot_args={"limit": limit, "cmap": "rainbow"},
+                    save_path=config.get_analysis_fig_path(),
+                    save_name=f"{efield_type}_{stat}_{type}_HCP_MMP1",
+                )
+
+    elif "plot_group_stats_on_atlas" in list_of_args:
+        pass
     elif "plot_efield_difference_between_groups" in list_of_args:
         mesh_list = [
             fname
@@ -658,7 +714,11 @@ if __name__ == "__main__":
         print(
             "plot_efield_difference_between_groups: plots the difference between the E-field magnitude for the two groups on an Fsaverage head"
         )
-
+        print(
+            "plot_group_stats_on_fsaverage: plots the avg and std of efield for each group over Fsaverage head"
+        )
+        print(
+            "plot_group_stats_on_atlas: plots the avg and std of efield for each group over atlas"
+        )
 
 # TODO: plot diff, avg, std, etc
-# TODO: check max limit for each subject type
