@@ -504,14 +504,14 @@ def _plot_msh(
     limit = (
         plot_args.get("limit")
         if plot_args.get("limit")
-        else max(meshes[0][scalar_name])
+        else [min(meshes[0][scalar_name]), max(meshes[0][scalar_name])]
     )
 
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
     sargs = {"color": "black", "title": title}
     for mesh in meshes:
         p.add_mesh(
-            mesh, scalars=scalar_name, clim=[0, limit], cmap=cmap, scalar_bar_args=sargs
+            mesh, scalars=scalar_name, clim=limit, cmap=cmap, scalar_bar_args=sargs
         )
     # p.add_text(
     #         f"Simulated TMS E-field magnitude for {type}[{subject}]",
@@ -617,21 +617,21 @@ if __name__ == "__main__":
 
     if "plot_magnE_on_subject" in list_of_args:
         for type in config.subjects:
-            limit = utils.get_max_efield_in_type(type)
+            limit = utils.get_lim_efield_in_type(type)
             for subject in config.subjects[type]:
                 plot_magnE_on_subject(subject, type, limit=limit)
 
     elif "plot_subjects_magnE_on_atlas" in list_of_args:
 
-        # limit = utils.get_max_efield_on_atlas()
+        # limit = utils.get_lim_efield_on_atlas()
         for type in config.subjects:
-            limit = utils.get_max_efield_in_type(type)
+            limit = utils.get_lim_efield_in_type(type)
             for subject in config.subjects[type]:
                 plot_magnE_on_atlas(subject, type, limit=limit)
 
     elif "plot_subjects_magnE_on_fsaverage" in list_of_args:
         for type in config.subjects:
-            limit = utils.get_max_efield_in_type(type)
+            limit = utils.get_lim_efield_in_type(type)
             for subject in config.subjects[type]:
                 plot_magnE_on_fsaverage(subject, type, limit=limit)
 
@@ -641,7 +641,7 @@ if __name__ == "__main__":
         for type in config.subjects:
             # get avg and std efields and plot
             for stat in stats:
-                limit = utils.get_max_stat_efield_in_type(type, stat=stat)
+                limit = utils.get_lim_stat_efield_in_type(type, stat=stat)
                 mesh = config.get_efield_stats_path(
                     type, stat=stat, over="fsavg", efield_type=efield_type
                 )
@@ -669,7 +669,7 @@ if __name__ == "__main__":
         for type in config.subjects:
             # get avg and std efields and plot
             for stat in stats:
-                limit = utils.get_max_stat_efield_in_type(type, stat=stat)
+                limit = utils.get_lim_stat_efield_in_type(type, stat=stat)
                 with open(
                     config.get_efield_stats_path(
                         type, stat=stat, over="HCP_MMP1", efield_type=efield_type
@@ -685,8 +685,53 @@ if __name__ == "__main__":
                     save_name=f"{efield_type}_{stat}_{type}_HCP_MMP1",
                 )
 
-    elif "plot_group_stats_on_atlas" in list_of_args:
-        pass
+    elif "plot_efield_difference_on_fsaverage" in list_of_args:
+        # load difference efields and plot
+        mesh_list = [
+            fname
+            for fname in os.listdir(config.get_analysis_data_path())
+            if fname.endswith(".msh") and "difference" in fname and "fsavg" in fname
+        ]
+        limit = utils.get_lim_efield_difference(over="fsavg")
+        for mesh in mesh_list:
+            _plot_msh(
+                [pv.read(os.path.join(config.get_analysis_data_path(), mesh))],
+                mesh[:-10],
+                title=f"Efield difference",
+                save_name=mesh[:-4],
+                save_path=config.get_analysis_fig_path(),
+                plot_args={
+                    "limit": limit,
+                    "cmap": "seismic",
+                    "position": (
+                        -471.96987340389745,
+                        88.16278454405862,
+                        268.98795757532633,
+                    ),
+                    "camera_roll": 93,
+                },
+            )
+
+    elif "plot_efield_difference_on_atlas" in list_of_args:
+        # load difference efields and plot
+        json_list = [
+            fname
+            for fname in os.listdir(config.get_analysis_data_path())
+            if fname.endswith(".json") and "difference" in fname and "HCP_MMP1" in fname
+        ]
+        limit = utils.get_lim_efield_difference(over="HCP_MMP1")
+        for json_file in json_list:
+            with open(
+                os.path.join(config.get_analysis_data_path(), json_file), "r"
+            ) as f:
+                efield_atlas = json.load(f)
+            _plot_HCP_MMP1_atlas(
+                efield_atlas,
+                title=f"Efield difference",
+                plot_args={"limit": limit, "cmap": "seismic"},
+                save_path=config.get_analysis_fig_path(),
+                save_name=json_file[:-5],
+            )
     elif "plot_efield_difference_between_groups" in list_of_args:
         mesh_list = [
             fname
@@ -712,13 +757,15 @@ if __name__ == "__main__":
             "plot_subjects_magnE_on_atlas: plots the magnitude of the E-field on the fsavg head for a specific atlas for all subjects"
         )
         print(
-            "plot_efield_difference_between_groups: plots the difference between the E-field magnitude for the two groups on an Fsaverage head"
-        )
-        print(
-            "plot_group_stats_on_fsaverage: plots the avg and std of efield for each group over Fsaverage head"
+            "plot_group_stats_on_fsaverage: plots the avg and std of efield for each group over FsAverage head"
         )
         print(
             "plot_group_stats_on_atlas: plots the avg and std of efield for each group over atlas"
         )
-
+        print(
+            "plot_efield_difference_on_fsaverage: plots the difference between the E-field magnitude between groups on an FsAverage head"
+        )
+        print(
+            "plot_efield_difference_on_atlas: plots the difference between the E-field magnitude between groups on an atlas"
+        )
 # TODO: plot diff, avg, std, etc
