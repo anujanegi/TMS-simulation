@@ -57,3 +57,23 @@ def get_max_stat_efield_in_type(type, stat):
         max_values.append(max(mesh.nodedata[0].value))
 
     return max(max_values)
+
+
+def get_max_efield_difference():
+    # gets the max value of the efield difference over fsavg
+    # NOTE: between fsavg and atlas, fsavg is the one with the highest values, hence choosing fsavg
+    max_values = []
+    import os
+
+    mesh_list = [
+        fname
+        for fname in os.listdir(config.get_analysis_data_path())
+        if fname.endswith(".msh") and "difference" in fname and "fsavg" in fname
+    ]
+    for mesh in mesh_list:
+        from simnibs import read_msh
+
+        mesh = read_msh(os.path.join(config.get_analysis_data_path(), mesh))
+        max_values.append(max(mesh.nodedata[0].value))
+
+    return max(max_values)

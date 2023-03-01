@@ -243,3 +243,5 @@ if __name__ == "__main__":
         print(
             "efield_group_diff_over_atlas: calculate the difference between the efields of the different subject types in the given atlas space"
         )
+
+# TODO: statistical significance btw groups
