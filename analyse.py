@@ -6,6 +6,7 @@ import pandas as pd
 import simnibs
 import config
 from itertools import combinations
+from scipy.stats import kstest
 
 
 def efield_group_stats_over_fsavg(subjects, field_name="magnE", show=False):
@@ -217,6 +218,51 @@ def efield_group_diff_over_atlas(subjects, field_name="magnE", atlas_name="HCP_M
         )
 
 
+def statistical_analysis(subjects, field_name="magnE", atlas_name="HCP_MMP1"):
+    """
+    Check if the average electric fields in each subject type are statistically significantly different
+    Does this in atlas space
+    Non normal, discrete distribution: perfrom KS test!
+    
+    Args:
+        subjects (_type_): dictionary of {subject type: list of subject IDS}
+        field_name (str, optional): name of the field to calculate the difference for. Defaults to "magnE".
+        atlas_name (str, optional): name of the atlas to calculate the difference over. Defaults to "HCP_MMP1".
+    """
+    # load average efield for each subject type over atlas
+    averaged_efields = {}
+    for subject_type in subjects:
+        with open(
+            os.path.join(
+                config.get_analysis_data_path(),
+                f"{field_name}_avg_{subject_type}_{atlas_name}.json",
+            ),
+            "r",
+        ) as f:
+            averaged_efields[subject_type] = json.load(f)
+
+    # get group combinations and perform KS test
+    subject_type_combinations = list(combinations(subjects.keys(), 2))
+    for combination in subject_type_combinations:
+        # null hypothesis: the two distributions are the same
+        print(f"Kolmogorov-Smirnov test for {combination[0]} and {combination[1]}:")
+        dist1 = np.array(list(averaged_efields[combination[0]].values()))
+        dist2 = np.array(list(averaged_efields[combination[1]].values()))
+        stat, p_value = kstest(dist1, dist2)
+        print(f"statistic={stat:.4f}, p-value={p_value:.4f}")
+        if p_value < 0.05:  # 95% confidence
+            print(
+                f"Efields of {combination[0]} and {combination[1]} and are statistically different\n"
+            )
+        else:
+            print(
+                f"Efields of {combination[0]} and {combination[1]} and are not statistically different\n"
+            )
+
+    # NOTE: as we take full brain here, the mean becomes very close to zero (efield is very small in non target areas)
+    # better way would be to test region wise, but n=5 is not enough for that
+
+
 if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
@@ -229,6 +275,8 @@ if __name__ == "__main__":
         efield_group_difference_over_fsavg(config.subjects)
     elif "efield_group_diff_over_atlas" in list_of_args:
         efield_group_diff_over_atlas(config.subjects)
+    elif "statistical_analysis" in list_of_args:
+        statistical_analysis(config.subjects)
     else:
         print("Supported commands:")
         print(
@@ -243,5 +291,6 @@ if __name__ == "__main__":
         print(
             "efield_group_diff_over_atlas: calculate the difference between the efields of the different subject types in the given atlas space"
         )
-
-# TODO: statistical significance btw groups
+        print(
+            "statistical_analysis: perform statistical analysis of the group averaged efields in the given atlas space"
+        )
