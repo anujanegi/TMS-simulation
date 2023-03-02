@@ -732,19 +732,7 @@ if __name__ == "__main__":
                 save_path=config.get_analysis_fig_path(),
                 save_name=json_file[:-5],
             )
-    elif "plot_efield_difference_between_groups" in list_of_args:
-        mesh_list = [
-            fname
-            for fname in os.listdir(config.get_analysis_path())
-            if fname.endswith(".msh") and "difference" in fname
-        ]
-        for mesh in mesh_list:
-            _plot_msh(
-                pv.read(os.path.join(config.get_analysis_path(), mesh)),
-                mesh[:-4],
-                title=mesh[:-4],
-                save_path=config.get_analysis_path(),
-            )
+
     else:
         print("Supported options:")
         print(
@@ -768,4 +756,3 @@ if __name__ == "__main__":
         print(
             "plot_efield_difference_on_atlas: plots the difference between the E-field magnitude between groups on an atlas"
         )
-# TODO: plot diff, avg, std, etc
