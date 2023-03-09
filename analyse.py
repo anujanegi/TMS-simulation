@@ -7,6 +7,8 @@ import simnibs
 import config
 from itertools import combinations
 from scipy.stats import kstest
+import pickle as pkl
+import mne
 
 
 def efield_group_stats_over_fsavg(subjects, field_name="magnE", show=False):
@@ -262,7 +264,36 @@ def statistical_analysis(subjects, field_name="magnE", atlas_name="HCP_MMP1"):
     # NOTE: as we take full brain here, the mean becomes very close to zero (efield is very small in non target areas)
     # better way would be to test region wise, but n=5 is not enough for that
 
+def tms_eeg_group_analysis(dt=1):
+    """
+    Loads TMS EEG for each subject in each group and
+    1. group average and make MNE Evoked object
+    2. plot group difference
+    """
+    tms_eeg = {}
+    tms_eeg_evoked = {}
+    for type in config.subjects:
+        tms_eeg[type] = []
+        
+        for subject in config.subjects[type]:
+            with open(os.path.join(config.get_TVB_simulation_results_path(subject, type), f"{type}_{subject}_eeg_data_educase_lf.pkl"), 'rb') as f:
+                data = pkl.load(f)
+            tms_eeg[type].append(data)  
 
+        #calculate group average
+        tms_eeg[type] = np.average(np.array(tms_eeg[type]), axis=0)
+ 
+        # make MNE Evoked object
+        biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+        info = mne.create_info(
+            ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+        )
+        evoked = mne.EvokedArray(tms_eeg[type][900:1500, :].T, info, tmin=-100 / 1000)
+        evoked.set_montage(biosemi64_montage)
+        tms_eeg_evoked[type] = evoked
+    
+    
+    
 if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
