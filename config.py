@@ -1,7 +1,7 @@
 import os
 
-data_path = "/home/anujanegi/tj/TMS-simulation/data"
-dataset_path = "/home/anujanegi/tj/TMS-simulation/data/ADNI"
+data_path = "/media/anujanegi/Anuja Negi/TMS-simulation/data"
+dataset_path = "/media/anujanegi/Anuja Negi/TMS-simulation/data/ADNI"
 subjects = {
     "AD": ["011_S_4547", "036_S_4715", "041_S_4974", "114_S_6039", "168_S_6142"],
     "MCI": ["002_S_1155", "002_S_4229", "002_S_4654", "002_S_1261", "003_S_1122"],
@@ -74,3 +74,48 @@ def get_efield_stats_path(type, efield_type="magnE", stat="avg", over="fsavg"):
     return os.path.join(
         get_analysis_data_path(), f"{efield_type}_{stat}_{type}_{over}{file_type}"
     )
+
+
+def get_subject_structural_connectivity_path(subject, type):
+    return os.path.join(
+        dataset_path, type, subject, "DWI_processing", "connectome_weights.csv"
+    )
+
+
+def get_subject_tract_lengths_path(subject, type):
+    return os.path.join(
+        dataset_path, type, subject, "DWI_processing", "connectome_lengths.csv"
+    )
+
+
+def get_region_labels_path(atls="HCP_MMP1"):
+    if atls == "HCP_MMP1":
+        return os.path.join(data_path, "HC", "region_labels_HCP.txt")
+    else:
+        print("Atlas not supported")
+
+
+def get_group_average_efield_over_atlas_path(
+    group, atlas="HCP_MMP1", efield_type="magnE"
+):
+    return os.path.join(
+        get_analysis_data_path(), f"{efield_type}_avg_{group}_{atlas}.json"
+    )
+
+
+def get_TVB_simulation_results_path(subject, type):
+    path = os.path.join(dataset_path, type, subject, "TVB_simulation_results")
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
+
+
+def get_TVB_simulation_results_figures_path(subject, type):
+    path = os.path.join(
+        dataset_path, type, subject, "TVB_simulation_results", "figures"
+    )
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
