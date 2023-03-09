@@ -101,3 +101,21 @@ def get_group_average_efield_over_atlas_path(
     return os.path.join(
         get_analysis_data_path(), f"{efield_type}_avg_{group}_{atlas}.json"
     )
+
+
+def get_TVB_simulation_results_path(subject, type):
+    path = os.path.join(dataset_path, type, subject, "TVB_simulation_results")
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
+
+
+def get_TVB_simulation_results_figures_path(subject, type):
+    path = os.path.join(
+        dataset_path, type, subject, "TVB_simulation_results", "figures"
+    )
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path

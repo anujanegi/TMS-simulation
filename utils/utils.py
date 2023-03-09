@@ -92,3 +92,8 @@ def get_lim_efield_difference(over="fsavg"):
                 min_values.append(min(efield.values()))
 
     return [min(min_values), max(max_values)]
+
+
+def find_roots(x, y):
+    s = np.abs(np.diff(np.sign(y))).astype(bool)
+    return x[:-1][s] + np.diff(x)[s] / (np.abs(y[1:][s] / y[:-1][s]) + 1)

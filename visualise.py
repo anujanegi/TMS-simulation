@@ -611,6 +611,77 @@ def plot_magnE_on_fsaverage(subject, type, limit):
     )
 
 
+def _plot(x, y, title, xlim=[0, 0]):
+    f, ax = plt.subplots(1, 1, figsize=(10, 5))
+    plt.plot(x, y)
+    plt.xlim(xlim[0], xlim[1])
+    lims = ax.get_xlim()
+    i = np.where((x > lims[0]) & (x < lims[1]))[0]
+    ax.set_ylim(y[i].min(), y[i].max())
+    plt.title(title)
+
+    return f, ax
+
+
+def plot_subject_lfp(time, lfp, onset=1000, plot_args={}, save_path=None):
+    f, ax = _plot(time, lfp, **plot_args)
+    ax.axvline(x=onset, color="m", linestyle="--", label="TMS pulse")
+    ax.axvline(x=onset + 30, color="b", linestyle="--", label="P30")
+    ax.legend()
+    ax.set_ylabel("Potential[y1-y2] (mV)")
+    ax.set_xlabel("Time (ms)")
+    if save_path:
+        plt.savefig(save_path, transaprent=True)
+
+
+def plot_subject_eeg(evoked, title=None, save_path=None):
+    """Plots TMS-EEG using mne
+
+    Args:
+        evoked (_type_): MNE Evoked object
+    """
+    title = title if title else "TMS-EEG"
+    f, ax = plt.subplots(figsize=(10, 4))
+    ax.axvline(x=0, color="b", linestyle="--", label="TMS pulse")
+    ax.legend()
+    f = evoked.plot(show=False, time_unit="ms", axes=ax, titles=title)
+    if save_path:
+        f.savefig(save_path, transparent=True)
+
+
+def plot_P30_topomap(evoked, title=None, save_path=None):
+    """Plots P30 topomap
+
+    Args:
+        evoked (_type_): MNE Evoked object
+        title (_type_, optional): _description_. Defaults to None.
+        save_path (_type_, optional): _description_. Defaults to None.
+    """
+    title = title if title else "P30 topomap"
+    fig = evoked.plot_topomap(
+        times=np.array([0.03]),
+        ch_type="eeg",
+        time_unit="ms",
+        show_names=False,
+        show=False,
+        size=4,
+    )
+    fig.axes[0].set_title(title, fontsize=16)
+    if save_path:
+        fig.savefig(save_path, transparent=True)
+
+
+def plot_P30_butterfly(evoked, title, save_path):
+    title = title if title else "P30 butterfly plot"
+    topomap_args = dict(ch_type="eeg", time_unit="ms", show_names=False)
+    ts_args = dict(time_unit="ms", show_names=False, titles=title)
+    fig = evoked.plot_joint(
+        times=np.array([0.03]), show=False, ts_args=ts_args, topomap_args=topomap_args
+    )
+    if save_path:
+        fig.savefig(save_path, transparent=True)
+
+
 if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
