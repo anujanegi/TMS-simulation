@@ -277,7 +277,11 @@ if __name__ == "__main__":
     do_resting_state_simulation = False
     overwrite = False
 
-    simulation_with_avg(subject=config.subjects["AD"][0], type="AD")
-    # for type in config.subjects:
-    #     for subject in config.subjects[type]:
-    #         simulation_with_avg(subject=subject, type=type, overwrite=overwrite, do_resting_state_simulation=do_resting_state_simulation)
+    for type in config.subjects:
+        for subject in config.subjects[type]:
+            simulation_with_avg(
+                subject=subject,
+                type=type,
+                overwrite=overwrite,
+                do_resting_state_simulation=do_resting_state_simulation,
+            )
