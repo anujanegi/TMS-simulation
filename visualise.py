@@ -631,7 +631,7 @@ def plot_subject_lfp(time, lfp, onset=1000, plot_args={}, save_path=None):
     ax.set_ylabel("Potential[y1-y2] (mV)")
     ax.set_xlabel("Time (ms)")
     if save_path:
-        plt.savefig(save_path, transaprent=True)
+        f.savefig(save_path, transaprent=True)
 
 
 def plot_subject_eeg(evoked, title=None, save_path=None):
