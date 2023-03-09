@@ -103,7 +103,7 @@ def calculate_leadfield(subject, type):
     lf.pathfem = os.path.join(config.get_subject_path(subject, type), "leadfield")
     # electrode positions
     lf.eeg_cap = os.path.join(
-        config.get_m2m_path(subject, type), "eeg_positions", "easycap_BC_TMS64_X21.csv"
+        config.get_m2m_path(subject, type), "eeg_positions", "EEG10-10_Cutini_2011.csv"
     )
     run_simnibs(lf)
 
