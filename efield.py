@@ -7,8 +7,8 @@ import nilearn.image as img
 import nilearn.plotting as niplot
 import os
 import numpy as np
-from numpy import degrees, arcsin, arctan2, deg2rad, cos, sin
 import config
+import sys
 
 
 def simulate_efield(subject, type):
@@ -95,10 +95,41 @@ def average_efield_over_atlas(
         return EF_result
 
 
+def calculate_leadfield(subject, type):
+    lf = sim_struct.TDCSLEADFIELD()
+    # subject folder
+    lf.subpath = config.get_m2m_path(subject, type)
+    # output directory
+    lf.pathfem = os.path.join(config.get_subject_path(subject, type), "leadfield")
+    # electrode positions
+    lf.eeg_cap = os.path.join(
+        config.get_m2m_path(subject, type), "eeg_positions", "easycap_BC_TMS64_X21.csv"
+    )
+    run_simnibs(lf)
+
+
 if __name__ == "__main__":
-    # simulates and saves the electric field for all subjects given in config.subjects
-    # saves eflield average over atlas in json file
-    for type in config.subjects:
-        for subject in config.subjects[type]:
-            simulate_efield(subject, type)
-            average_efield_over_atlas(subject, type)
+    list_of_args = sys.argv[1:]
+
+    if "simulate_efield" in list_of_args:
+        # simulates and saves the electric field for all subjects given in config.subjects
+        # saves eflield average over atlas in json file
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                simulate_efield(subject, type)
+                average_efield_over_atlas(subject, type)
+
+    elif "calculate_leadfield" in list_of_args:
+        # calculates the leadfield for all subjects given in config.subjects
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                calculate_leadfield(subject, type)
+
+    else:
+        print("Supported arguments:")
+        print(
+            "simulate_efield: Simulates and saves the electric field for all subjects given in config.subjects; also averages eflield over atlas and saves as a json file"
+        )
+        print(
+            "calculate_leadfield: Calculates the leadfield for all subjects given in config.subjects"
+        )
