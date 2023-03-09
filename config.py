@@ -1,7 +1,7 @@
 import os
 
-data_path = "/home/anujanegi/tj/TMS-simulation/data"
-dataset_path = "/home/anujanegi/tj/TMS-simulation/data/ADNI"
+data_path = "/media/anujanegi/Anuja Negi/TMS-simulation/data"
+dataset_path = "/media/anujanegi/Anuja Negi/TMS-simulation/data/ADNI"
 subjects = {
     "AD": ["011_S_4547", "036_S_4715", "041_S_4974", "114_S_6039", "168_S_6142"],
     "MCI": ["002_S_1155", "002_S_4229", "002_S_4654", "002_S_1261", "003_S_1122"],
