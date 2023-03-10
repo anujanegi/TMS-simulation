@@ -14,8 +14,8 @@ from utils.utils import find_roots
 import mne
 
 
-def simulation_with_avg(
-    subject, type, do_resting_state_simulation=False, overwrite=False, dt=1
+def run_simulation(
+    subject, type, do_resting_state_simulation=False, overwrite=False, efield_type='group_avg', dt=1
 ):
     """
     runs TVB simulation for each subject :
@@ -30,7 +30,7 @@ def simulation_with_avg(
     if not overwrite and os.path.isfile(
         os.path.join(
             config.get_TVB_simulation_results_path(subject, type),
-            f"{type}_{subject}_tms_simulation.pkl",
+            f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
         )
     ):
         print(
@@ -44,7 +44,7 @@ def simulation_with_avg(
             open(
                 os.path.join(
                     config.get_TVB_simulation_results_path(subject, type),
-                    f"{type}_{subject}_tms_simulation.pkl",
+                    f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
                 ),
                 "rb",
             )
@@ -158,13 +158,13 @@ def simulation_with_avg(
         if do_resting_state_simulation:
             filename = os.path.join(
                 config.get_TVB_simulation_results_path(subject, type),
-                f"{type}_{subject}_resting_state_simulation.pkl",
+                f"{type}_{subject}_{efield_type}_efield_resting_state_simulation.pkl",
             )
             pkl.dump(rs_data, open(filename, "wb"))
 
         filename = os.path.join(
             config.get_TVB_simulation_results_path(subject, type),
-            f"{type}_{subject}_tms_simulation.pkl",
+            f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
         )
         pkl.dump(tms_data, open(filename, "wb"))
 
@@ -178,7 +178,7 @@ def simulation_with_avg(
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(subject, type),
-                f"{type}_{subject}_P30_amplitude.pkl",
+                f"{type}_{subject}_{efield_type}_efield_P30_amplitude.pkl",
             ),
             "wb",
         ),
@@ -191,7 +191,7 @@ def simulation_with_avg(
         plot_args={"title": f"LFP for {type}({subject})", "xlim": [900, 1500]},
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_lfp.png",
+            f"{type}_{subject}_{efield_type}_efield_lfp.png",
         ),
     )
 
@@ -209,7 +209,7 @@ def simulation_with_avg(
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(subject, type),
-                f"{type}_{subject}_eeg_data_educase_lf.pkl",
+                f"{type}_{subject}_{efield_type}_efield_eeg_data_educase_lf.pkl",
             ),
             "wb",
         ),
@@ -237,7 +237,7 @@ def simulation_with_avg(
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(subject, type),
-                f"{type}_{subject}_Evoked_educase_lf_biosemi64.pkl",
+                f"{type}_{subject}_{efield_type}_efield_Evoked_educase_lf_biosemi64.pkl",
             ),
             "wb",
         ),
@@ -250,7 +250,7 @@ def simulation_with_avg(
         title=f"TMS-EEG for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_eeg_data_educase_lf_biosemi64.png",
+            f"{type}_{subject}_{efield_type}_efield_eeg_data_educase_lf_biosemi64.png",
         ),
     )
 
@@ -259,7 +259,7 @@ def simulation_with_avg(
         title=f"Topomap of P30 TEP for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_P30_topomap_educase_lf_biosemi64.png",
+            f"{type}_{subject}_{efield_type}_efield_P30_topomap_educase_lf_biosemi64.png",
         ),
     )
 
@@ -268,7 +268,7 @@ def simulation_with_avg(
         title=f"TMS evoked potential for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_P30_butterfly_educase_lf_biosemi64.png",
+            f"{type}_{subject}_{efield_type}_efield_P30_butterfly_educase_lf_biosemi64.png",
         ),
     )
 
@@ -276,12 +276,23 @@ def simulation_with_avg(
 if __name__ == "__main__":
     do_resting_state_simulation = False
     overwrite = False
-
-    for type in config.subjects:
-        for subject in config.subjects[type]:
-            simulation_with_avg(
-                subject=subject,
-                type=type,
-                overwrite=overwrite,
-                do_resting_state_simulation=do_resting_state_simulation,
-            )
+    
+    list_of_args = sys.argv[1:]
+    
+    if 'simulation_with_avg_efield' in list_of_args:
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                run_simulation(
+                    subject=subject,
+                    type=type,
+                    overwrite=overwrite,
+                    do_resting_state_simulation=do_resting_state_simulation,
+                    efield_type='group_avg'
+                )
+    
+    elif 'similation_with_ind_efield' in list_of_args:
+        pass
+    else:
+        print('Supported options:')
+        print('simulation_with_avg_efield: Runs TMS-EGG simulation for each subject using the group averaged TMS efied (using TVB)')
+        print("similation_with_ind_efield: Runs TMS-EGG simulation for each subject using the subject's own TMS efied (using TVB)")
