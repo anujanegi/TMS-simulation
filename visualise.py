@@ -674,12 +674,12 @@ def plot_P30_topomap(evoked, title=None, save_path=None):
         fig.savefig(save_path, transparent=True)
 
 
-def plot_P30_butterfly(evoked, title, save_path):
+def plot_TEP_butterfly(evoked, title, save_path=None, times=np.array([0.03])):
     title = title if title else "P30 butterfly plot"
     topomap_args = dict(ch_type="eeg", time_unit="ms", show_names=False)
-    ts_args = dict(time_unit="ms", show_names=False, titles=title)
+    ts_args = dict(time_unit="ms", show_names=False, titles=title, gfp=True)
     fig = evoked.plot_joint(
-        times=np.array([0.03]), show=False, ts_args=ts_args, topomap_args=topomap_args
+        times=times, show=False, ts_args=ts_args, topomap_args=topomap_args
     )
     if save_path:
         fig.savefig(save_path, transparent=True)
