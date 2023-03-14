@@ -16,6 +16,7 @@ import json
 import utils.utils as utils
 import pickle as pkl
 import mne
+import seaborn as sns
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -730,7 +731,51 @@ def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="indivi
     )
     if save_path:
         fig.savefig(save_path, transparent=True)
-    print("Saved to", save_path)
+        print("Saved to", save_path)
+
+
+def plot_P30_amplitude_comparison(
+    dt=1, save_path=None, efield_type_in_sim="individual"
+):
+    tms_eeg = {}
+    for type in config.subjects:
+        tms_eeg[type] = []
+
+        for subject in config.subjects[type]:
+            with open(
+                os.path.join(
+                    config.get_TVB_simulation_results_path(subject, type),
+                    f"{type}_{subject}_{efield_type_in_sim}_efield_eeg_data_educase_lf.pkl",
+                ),
+                "rb",
+            ) as f:
+                data = pkl.load(f)
+            tms_eeg[type].append(data)
+
+    subjects = sum([config.subjects[type] for type in config.subjects], [])
+    types = []
+    P30_amplitude = []
+    for type in tms_eeg:
+        for subject_eeg in tms_eeg[type]:
+            types.append(type)
+            P30_amplitude.append(np.average(subject_eeg, axis=1)[1030])
+
+    import pandas as pd
+
+    df = pd.DataFrame(
+        {"subject_ID": subjects, "Diagnosis": types, "P30_amplitude": P30_amplitude}
+    )
+    sns_plot = sns.scatterplot(
+        data=df, x="Diagnosis", y="P30_amplitude", hue="Diagnosis"
+    )
+    plt.title(
+        f"P30 amplitude from average of all electrodes ({efield_type_in_sim} efield used)"
+    )
+    fig = sns_plot.get_figure()
+    if save_path:
+        fig.savefig(save_path, transparent=True)
+        fig.clear()
+        print("Saved to", save_path)
 
 
 if __name__ == "__main__":
@@ -863,6 +908,15 @@ if __name__ == "__main__":
             plot_avg_TMS_EEG_comparison(
                 save_path=save_path, efield_type_in_sim=efield_type_in_sim
             )
+    elif "P30_amplitude_comparison" in list_of_args:
+        for efield_type_in_sim in ["group_avg", "individual"]:
+            save_path = os.path.join(
+                config.get_analysis_fig_path(),
+                f"P30 amplitude scatter comparison for {efield_type_in_sim} efield.png",
+            )
+            plot_P30_amplitude_comparison(
+                save_path=save_path, efield_type_in_sim=efield_type_in_sim
+            )
 
     else:
         print("Supported options:")
@@ -889,4 +943,7 @@ if __name__ == "__main__":
         )
         print(
             "TMS_EEG_avg_comparison: plots the TMS-EEG average of all electrodes for all groups in a single plot (for both individual and group avg. efield simulaions)"
+        )
+        print(
+            "P30_amplitude_comparison: plots the P30 amplitude scatter plot for all groups in a single plot (for both individual and group avg. efield simulaions)"
         )
