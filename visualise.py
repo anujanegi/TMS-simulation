@@ -14,6 +14,8 @@ import os
 import simnibs
 import json
 import utils.utils as utils
+import pickle as pkl
+import mne
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -682,6 +684,55 @@ def plot_P30_butterfly(evoked, title, save_path):
         fig.savefig(save_path, transparent=True)
 
 
+def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="individual"):
+    tms_eeg = {}
+    tms_eeg_avg = {}
+    tms_eeg_evoked = {}
+    for type in config.subjects:
+        tms_eeg[type] = []
+
+        for subject in config.subjects[type]:
+            with open(
+                os.path.join(
+                    config.get_TVB_simulation_results_path(subject, type),
+                    f"{type}_{subject}_{efield_type_in_sim}_efield_eeg_data_educase_lf.pkl",
+                ),
+                "rb",
+            ) as f:
+                data = pkl.load(f)
+            tms_eeg[type].append(data)
+
+        # calculate group average
+        tms_eeg_avg[type] = np.average(np.array(tms_eeg[type]), axis=0)
+
+        # make MNE Evoked object
+        biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+        info = mne.create_info(
+            ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+        )
+        evoked = mne.EvokedArray(
+            tms_eeg_avg[type][900:1500, :].T, info, tmin=-100 / 1000
+        )
+        evoked.set_montage(biosemi64_montage)
+        tms_eeg_evoked[type] = evoked
+
+    fig, ax = plt.subplots(1, figsize=(10, 5))
+    ax.axvline(30, color="r", linestyle="--", label="P30")
+    fig.legend()
+    mne.viz.plot_compare_evokeds(
+        tms_eeg_evoked,
+        combine="mean",
+        time_unit="ms",
+        title=f"Averaged TMS-EEG (using {efield_type_in_sim} efield)",
+        axes=ax,
+        show_sensors="upper right",
+        show=False,
+    )
+    if save_path:
+        fig.savefig(save_path, transparent=True)
+    print("Saved to", save_path)
+
+
 if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
@@ -803,6 +854,15 @@ if __name__ == "__main__":
                 save_path=config.get_analysis_fig_path(),
                 save_name=json_file[:-5],
             )
+    elif "TMS_EEG_avg_comparison" in list_of_args:
+        for efield_type_in_sim in ["group_avg", "individual"]:
+            save_path = os.path.join(
+                config.get_analysis_fig_path(),
+                f"Avg TMS-EEG comparison for {efield_type_in_sim} efield.png",
+            )
+            plot_avg_TMS_EEG_comparison(
+                save_path=save_path, efield_type_in_sim=efield_type_in_sim
+            )
 
     else:
         print("Supported options:")
@@ -826,4 +886,7 @@ if __name__ == "__main__":
         )
         print(
             "plot_efield_difference_on_atlas: plots the difference between the E-field magnitude between groups on an atlas"
+        )
+        print(
+            "TMS_EEG_avg_comparison: plots the TMS-EEG average of all electrodes for all groups in a single plot (for both individual and group avg. efield simulaions)"
         )
