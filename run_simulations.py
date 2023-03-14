@@ -14,13 +14,18 @@ from utils.utils import find_roots
 import mne
 
 
-def run_simulation(
-    subject, type, do_resting_state_simulation=False, overwrite=False, efield_type='group_avg', dt=1
+def run_TMS_EEG_simulations(
+    subject,
+    type,
+    do_resting_state_simulation=False,
+    overwrite=False,
+    efield_type="group_avg",
+    dt=1,
 ):
     """
     runs TVB simulation for each subject :
         1. use individual structural connectivity matrices
-        2. use group avg TMS efield as stimulus to TVB
+        2. use group avg or individual TMS efield as stimulus to TVB
         3. run TVB simulation
         4. save TVB simulation results
         5. generate eeg using avg leadfield from Leon
@@ -64,12 +69,25 @@ def run_simulation(
         PATH_TO_SC = config.get_subject_structural_connectivity_path(subject, type)
         PATH_TO_TRACT_LENGTHS = config.get_subject_tract_lengths_path(subject, type)
         PATH_TO_REGION_LABELS = config.get_region_labels_path("HCP_MMP1")
-        PATH_TO_TMS_ELECTRIC_FIELD = config.get_group_average_efield_over_atlas_path(
-            type, "HCP_MMP1", "magnE"
-        )
+        if efield_type == "group_avg":
+            PATH_TO_TMS_ELECTRIC_FIELD = (
+                config.get_group_average_efield_over_atlas_path(
+                    type, "HCP_MMP1", "magnE"
+                )
+            )
+        elif efield_type == "individual":
+            PATH_TO_TMS_ELECTRIC_FIELD = config.get_efield_atlas_avg_path(
+                subject, type, "HCP_MMP1", "magnE"
+            )
 
         # define TVB models
-        neuron_model, heunint, default_cortex, white_matter, white_matter_coupling = get_brain_models(
+        (
+            neuron_model,
+            heunint,
+            default_cortex,
+            white_matter,
+            white_matter_coupling,
+        ) = get_brain_models(
             NMM="jansen_rit",
             path_to_SC=PATH_TO_SC,
             path_to_region_labels=PATH_TO_REGION_LABELS,
@@ -276,23 +294,35 @@ def run_simulation(
 if __name__ == "__main__":
     do_resting_state_simulation = False
     overwrite = False
-    
+
     list_of_args = sys.argv[1:]
-    
-    if 'simulation_with_avg_efield' in list_of_args:
+
+    if "simulation_with_avg_efield" in list_of_args:
         for type in config.subjects:
             for subject in config.subjects[type]:
-                run_simulation(
+                run_TMS_EEG_simulations(
                     subject=subject,
                     type=type,
                     overwrite=overwrite,
                     do_resting_state_simulation=do_resting_state_simulation,
-                    efield_type='group_avg'
+                    efield_type="group_avg",
                 )
-    
-    elif 'similation_with_ind_efield' in list_of_args:
-        pass
+
+    elif "simulation_with_ind_efield" in list_of_args:
+        for type in config.subjects:
+            for subject in config.subjects[type]:
+                run_TMS_EEG_simulations(
+                    subject=subject,
+                    type=type,
+                    overwrite=overwrite,
+                    do_resting_state_simulation=do_resting_state_simulation,
+                    efield_type="individual",
+                )
     else:
-        print('Supported options:')
-        print('simulation_with_avg_efield: Runs TMS-EGG simulation for each subject using the group averaged TMS efied (using TVB)')
-        print("similation_with_ind_efield: Runs TMS-EGG simulation for each subject using the subject's own TMS efied (using TVB)")
+        print("Supported options:")
+        print(
+            "simulation_with_avg_efield: Runs TMS-EGG simulation for each subject using the group averaged TMS efied (using TVB)"
+        )
+        print(
+            "simulation_with_ind_efield: Runs TMS-EGG simulation for each subject using the subject's own TMS efied (using TVB)"
+        )
