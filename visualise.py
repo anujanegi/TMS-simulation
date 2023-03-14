@@ -531,7 +531,7 @@ def _plot_msh(
     print(f"Saved {save_name} in {save_path}")
 
 
-def _plot_HCP_MMP1_atlas(
+def _plot_efield_HCP_MMP1_atlas(
     atlas_json, title=None, plot_args={}, save_path="./", save_name=None
 ):
     ef_idxRegions = atlas_json.copy()
@@ -566,6 +566,42 @@ def _plot_HCP_MMP1_atlas(
     _plot_msh(ls_mesh, "data", title, plot_args, save_path, save_name)
 
 
+def _plot_lfp_HCP_MMP1_atlas(
+    lfp, title=None, plot_args={}, save_path="./", save_name=None
+):
+    assert lfp.shape[0] == 379, "LFP should have 379 regions"
+    with open(config.get_region_labels_path("HCP_MMP1"), "r") as f:
+        regions_ = f.readlines()
+    regions = [i.splitlines()[0] for i in regions_]
+    lfp_json = {regions[i]: lfp[i] for i in range(379)}
+
+    # generate a glasser msh
+    dir = config.get_glasser_msh_path()
+    rl = np.loadtxt(os.path.join(dir, "_regions.txt"), dtype=str)
+    ls_mesh = []
+    for reg in rl:
+        mesh = pv.read(os.path.join(dir, str(reg)))
+
+        reg_format = reg.split(".")[0]
+        key = (
+            reg_format[reg_format.find("L") :]
+            if reg_format.find("L") != -1 and reg_format.find("L") < 10
+            else reg_format[reg_format.find("R") :]
+        )
+        mesh.cell_data["data"] = lfp_json[key] if key in lfp_json else 0
+        ls_mesh.append(mesh)
+
+    plot_args["position"] = (
+        plot_args.get("position")
+        if plot_args.get("position")
+        else (-515.2932430512969, 227.73440753777155, -153.4630638823102)
+    )
+    plot_args["camera_roll"] = (
+        plot_args.get("camera_roll") if plot_args.get("camera_roll") else -13
+    )
+    _plot_msh(ls_mesh, "data", title, plot_args, save_path, save_name)
+
+
 def plot_magnE_on_subject(subject, type, limit):
     mesh = pv.read(config.get_efield_head_mesh_path(subject, type))
     _plot_msh(
@@ -587,7 +623,7 @@ def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", limit=None):
     # load .json efield averaged over the atlas
     with open(config.get_efield_atlas_avg_path(subject, type), "r") as f:
         efield_avg_atlas = json.load(f)
-    _plot_HCP_MMP1_atlas(
+    _plot_efield_HCP_MMP1_atlas(
         efield_avg_atlas,
         title=f"E-field magnitude",
         plot_args={"limit": limit, "cmap": "rainbow"},
@@ -685,7 +721,7 @@ def plot_TEP_butterfly(evoked, title, save_path=None, times=np.array([0.03])):
         fig.savefig(save_path, transparent=True)
 
 
-def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="individual"):
+def _get_evoked_group_averages(dt, efield_type_in_sim):
     tms_eeg = {}
     tms_eeg_avg = {}
     tms_eeg_evoked = {}
@@ -717,6 +753,11 @@ def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="indivi
         evoked.set_montage(biosemi64_montage)
         tms_eeg_evoked[type] = evoked
 
+    return tms_eeg, tms_eeg_evoked
+
+
+def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="individual"):
+    _, tms_eeg_evoked = _get_evoked_group_averages(dt, efield_type_in_sim)
     fig, ax = plt.subplots(1, figsize=(10, 5))
     ax.axvline(30, color="r", linestyle="--", label="P30")
     fig.legend()
@@ -737,20 +778,7 @@ def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="indivi
 def plot_P30_amplitude_comparison(
     dt=1, save_path=None, efield_type_in_sim="individual"
 ):
-    tms_eeg = {}
-    for type in config.subjects:
-        tms_eeg[type] = []
-
-        for subject in config.subjects[type]:
-            with open(
-                os.path.join(
-                    config.get_TVB_simulation_results_path(subject, type),
-                    f"{type}_{subject}_{efield_type_in_sim}_efield_eeg_data_educase_lf.pkl",
-                ),
-                "rb",
-            ) as f:
-                data = pkl.load(f)
-            tms_eeg[type].append(data)
+    tms_eeg, _ = _get_evoked_group_averages(dt, efield_type_in_sim)
 
     subjects = sum([config.subjects[type] for type in config.subjects], [])
     types = []
@@ -776,6 +804,19 @@ def plot_P30_amplitude_comparison(
         fig.savefig(save_path, transparent=True)
         fig.clear()
         print("Saved to", save_path)
+
+
+def plot_LFP_on_atlas(
+    lfp, type, atlas_name="HCP_MMP1", limit=None, title=None, time="Not specified"
+):
+    title = title if title else f"Local field potential)"
+    _plot_lfp_HCP_MMP1_atlas(
+        lfp,
+        title=title,
+        plot_args={"cmap": "rainbow", "limit": [min(lfp), max(lfp)]},
+        save_path=config.get_analysis_fig_path(),
+        save_name=f"{type} LFP over {atlas_name} at {time}",
+    )
 
 
 if __name__ == "__main__":
@@ -844,7 +885,7 @@ if __name__ == "__main__":
                     "r",
                 ) as f:
                     efield_atlas = json.load(f)
-                _plot_HCP_MMP1_atlas(
+                _plot_efield_HCP_MMP1_atlas(
                     efield_atlas,
                     title=f"{stat} of Efield",
                     plot_args={"limit": limit, "cmap": "rainbow"},
@@ -892,7 +933,7 @@ if __name__ == "__main__":
                 os.path.join(config.get_analysis_data_path(), json_file), "r"
             ) as f:
                 efield_atlas = json.load(f)
-            _plot_HCP_MMP1_atlas(
+            _plot_efield_HCP_MMP1_atlas(
                 efield_atlas,
                 title=f"Efield difference",
                 plot_args={"limit": limit, "cmap": "seismic"},
@@ -917,6 +958,50 @@ if __name__ == "__main__":
             plot_P30_amplitude_comparison(
                 save_path=save_path, efield_type_in_sim=efield_type_in_sim
             )
+    elif "TMS_EEG_for_groups" in list_of_args:
+        for efield_type_in_sim in ["group_avg", "individual"]:
+            _, tms_eeg_evoked = _get_evoked_group_averages(
+                dt=1, efield_type_in_sim=efield_type_in_sim
+            )
+            for type in config.subjects:
+                save_path = os.path.join(
+                    config.get_analysis_fig_path(),
+                    f"TMS-EEG_{type}_{efield_type_in_sim}_efield.png",
+                )
+
+                plot_TEP_butterfly(
+                    tms_eeg_evoked[type],
+                    title=f"TMS-EEG for {type} (using {efield_type_in_sim} efield)",
+                    save_path=save_path,
+                    times=np.array([0.03, 0.044, 0.1, 0.18]),
+                )
+    elif "LFP_on_atlas_for_groups" in list_of_args:
+        # calculate LFP for each group averaged over all subjects
+        # plot this on atlas for TEP time points
+
+        lfp = {}
+        for type in config.subjects:
+            lfps = []
+            for subject in config.subjects[type]:
+                # AD_011_S_4547_individual_efield_tms_simulation.pkl
+                lfp_path = os.path.join(
+                    config.get_TVB_simulation_results_path(subject, type),
+                    f"{type}_{subject}_individual_efield_tms_simulation.pkl",
+                )
+                with open(lfp_path, "rb") as f:
+                    lfps.append(pkl.load(f)["raw"]["data"])
+            lfp[type] = np.average(np.array(lfps), axis=0)
+
+        times = [1030, 1044, 1050, 1100, 1180]
+        TEP_name = ["P30", "N44", "P50", "N100", "P180"]
+        for type in config.subjects:
+            for time, name in zip(times, TEP_name):
+                plot_LFP_on_atlas(
+                    lfp[type][time, 0, :, 0],
+                    type,
+                    title=f"Local field potential at {name} ",
+                    time=time,
+                )
 
     else:
         print("Supported options:")
@@ -942,8 +1027,14 @@ if __name__ == "__main__":
             "plot_efield_difference_on_atlas: plots the difference between the E-field magnitude between groups on an atlas"
         )
         print(
+            "TMS_EEG_for_groups: plots the TMS-EEG butterfly plot averaged over all subjects for every group (for both individual and group avg. efield simulaions)"
+        )
+        print(
             "TMS_EEG_avg_comparison: plots the TMS-EEG average of all electrodes for all groups in a single plot (for both individual and group avg. efield simulaions)"
         )
         print(
             "P30_amplitude_comparison: plots the P30 amplitude scatter plot for all groups in a single plot (for both individual and group avg. efield simulaions)"
+        )
+        print(
+            "LFP_on_atlas_for_groups: plots the LFP on the atlas for all groups in a single plot (for individual efield simulaions)"
         )
