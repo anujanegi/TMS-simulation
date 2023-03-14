@@ -70,10 +70,8 @@ def run_TMS_EEG_simulations(
         PATH_TO_TRACT_LENGTHS = config.get_subject_tract_lengths_path(subject, type)
         PATH_TO_REGION_LABELS = config.get_region_labels_path("HCP_MMP1")
         if efield_type == "group_avg":
-            PATH_TO_TMS_ELECTRIC_FIELD = (
-                config.get_group_average_efield_over_atlas_path(
-                    type, "HCP_MMP1", "magnE"
-                )
+            PATH_TO_TMS_ELECTRIC_FIELD = config.get_group_average_efield_over_atlas_path(
+                type, "HCP_MMP1", "magnE"
             )
         elif efield_type == "individual":
             PATH_TO_TMS_ELECTRIC_FIELD = config.get_efield_atlas_avg_path(
@@ -215,8 +213,11 @@ def run_TMS_EEG_simulations(
 
     # 5. generate eeg using avg leadfield from Leon
     ## convert to eeg
-    PATH_TO_LEADFIELD = (
-        f"./data/TVB_EducaseAD_molecular_pathways_TVB/_{type}/leadfield.mat"
+    PATH_TO_LEADFIELD = os.path.join(
+        config.data_path,
+        "TVB_EducaseAD_molecular_pathways_TVB",
+        f"_{type}",
+        "leadfield.mat",
     )
 
     lead_field = sio.loadmat(PATH_TO_LEADFIELD)
@@ -281,12 +282,22 @@ def run_TMS_EEG_simulations(
         ),
     )
 
-    plot_P30_butterfly(
+    plot_TEP_butterfly(
         evoked,
         title=f"TMS evoked potential for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
             f"{type}_{subject}_{efield_type}_efield_P30_butterfly_educase_lf_biosemi64.png",
+        ),
+    )
+
+    plot_TEP_butterfly(
+        evoked,
+        times=np.array([0.03, 0.044, 0.1, 0.18]),
+        title=f"TMS evoked potential for {type} subject {subject}",
+        save_path=os.path.join(
+            config.get_TVB_simulation_results_figures_path(subject, type),
+            f"{type}_{subject}_{efield_type}_efield_TEP_butterfly_educase_lf_biosemi64.png",
         ),
     )
 
