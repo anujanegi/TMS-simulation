@@ -756,16 +756,20 @@ def _get_evoked_group_averages(dt, efield_type_in_sim):
     return tms_eeg, tms_eeg_evoked
 
 
-def plot_avg_TMS_EEG_comparison(dt=1, save_path=None, efield_type_in_sim="individual"):
+def plot_TMS_EEG_comparison(
+    dt=1, save_path=None, efield_type_in_sim="individual", combine="mean"
+):
     _, tms_eeg_evoked = _get_evoked_group_averages(dt, efield_type_in_sim)
     fig, ax = plt.subplots(1, figsize=(10, 5))
     ax.axvline(30, color="r", linestyle="--", label="P30")
     fig.legend()
+    title_ = "Global Field Power" if combine == "gfp" else str(combine).title()
+
     mne.viz.plot_compare_evokeds(
         tms_eeg_evoked,
-        combine="mean",
+        combine=combine,
         time_unit="ms",
-        title=f"Averaged TMS-EEG (using {efield_type_in_sim} efield)",
+        title=f"{title_} of TMS-EEG (using {efield_type_in_sim} efield)",
         axes=ax,
         show_sensors="upper right",
         show=False,
@@ -940,15 +944,18 @@ if __name__ == "__main__":
                 save_path=config.get_analysis_fig_path(),
                 save_name=json_file[:-5],
             )
-    elif "TMS_EEG_avg_comparison" in list_of_args:
+    elif "TMS_EEG_comparison" in list_of_args:
         for efield_type_in_sim in ["group_avg", "individual"]:
-            save_path = os.path.join(
-                config.get_analysis_fig_path(),
-                f"Avg TMS-EEG comparison for {efield_type_in_sim} efield.png",
-            )
-            plot_avg_TMS_EEG_comparison(
-                save_path=save_path, efield_type_in_sim=efield_type_in_sim
-            )
+            for combine in ["mean", "gfp"]:
+                save_path = os.path.join(
+                    config.get_analysis_fig_path(),
+                    f"{str(combine).title()} TMS-EEG comparison for {efield_type_in_sim} efield.png",
+                )
+                plot_TMS_EEG_comparison(
+                    save_path=save_path,
+                    efield_type_in_sim=efield_type_in_sim,
+                    combine=combine,
+                )
     elif "P30_amplitude_comparison" in list_of_args:
         for efield_type_in_sim in ["group_avg", "individual"]:
             save_path = os.path.join(
@@ -1030,7 +1037,7 @@ if __name__ == "__main__":
             "TMS_EEG_for_groups: plots the TMS-EEG butterfly plot averaged over all subjects for every group (for both individual and group avg. efield simulaions)"
         )
         print(
-            "TMS_EEG_avg_comparison: plots the TMS-EEG average of all electrodes for all groups in a single plot (for both individual and group avg. efield simulaions)"
+            "TMS_EEG_comparison: plots the mean and gfp TMS-EEG averaged over of all electrodes for all groups in a single plot (for both individual and group avg. efield simulaions)"
         )
         print(
             "P30_amplitude_comparison: plots the P30 amplitude scatter plot for all groups in a single plot (for both individual and group avg. efield simulaions)"
