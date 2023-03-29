@@ -96,6 +96,8 @@ def run_TMS_EEG_simulations(
         neuron_model.a_2 = np.array([0.8])
         neuron_model.a_3 = np.array([0.25])
         neuron_model.a_4 = np.array([0.25])
+        # stimulus var; default is [1, 2]
+        # neuron_model.stvar = np.array([0.0]) 
 
         # 2. use group avg TMS efield as stimulus to TVB
         # using HCP MMP1 atlas
@@ -213,15 +215,16 @@ def run_TMS_EEG_simulations(
 
     # 5. generate eeg using avg leadfield from Leon
     ## convert to eeg
-    PATH_TO_LEADFIELD = os.path.join(
-        config.data_path,
-        "TVB_EducaseAD_molecular_pathways_TVB",
-        f"_{type}",
-        "leadfield.mat",
-    )
-
-    lead_field = sio.loadmat(PATH_TO_LEADFIELD)
-    eeg_data = lead_field["lf_sum"].dot(TMS_RAW[:, 0, :, 0].T).T
+    PATH_TO_LEADFIELD = '/home/anujanegi/tj/TMS-simulation/LFM_01_Subject_01_ICBM152_10_10_65_cap.npy'
+    # os.path.join(
+    #     config.data_path,
+    #     "TVB_EducaseAD_molecular_pathways_TVB",
+    #     f"_{type}",
+    #     "leadfield.mat",
+    # )
+    
+    lead_field = np.load(PATH_TO_LEADFIELD)
+    eeg_data = lead_field.dot(TMS_RAW[:, 0, :, 0].T).T
     # save eeg data
     pkl.dump(
         eeg_data,
@@ -235,21 +238,29 @@ def run_TMS_EEG_simulations(
     )
 
     # convert to mne Evoked
-    biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+    # biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+    channels_sim = np.load('/home/anujanegi/tj/TMS-simulation/LFM_01_Subject_01_ICBM152_10_10_65_cap_channels (1).npy')
+        
+    channels_all = np.ndarray.tolist(np.insert(channels_sim, 18, ['IO1', 'IO2']))
+    eeg_data = np.insert(eeg_data, [18, 18], 0, axis=1)
+    # use test_montage to create a montage
+    ICBM = mne.channels.read_custom_montage('/home/anujanegi/tj/TMS-simulation/LFM_01_subject_01_ICBM152_generic_10_10_65_cap.sfp')
+        
     # plot eeg cap layout
-    f = biosemi64_montage.plot(show_names=True, show=False)
+    f = ICBM.plot(show_names=True, show=False)
     f.savefig(
         os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"biosemi64_eeg_cap_layout.png",
+            f"ICBM152_10_10_65_eeg_cap_layout.png",
         )
     )
 
     info = mne.create_info(
-        ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+        ch_names=channels_all, sfreq=1000 / dt, ch_types="eeg"
     )
+    
     evoked = mne.EvokedArray(eeg_data[900:1500, :].T, info, tmin=-100 / 1000)
-    evoked.set_montage(biosemi64_montage)
+    evoked.set_montage(ICBM)
     # save evoked
     pkl.dump(
         evoked,
@@ -304,7 +315,7 @@ def run_TMS_EEG_simulations(
 
 if __name__ == "__main__":
     do_resting_state_simulation = False
-    overwrite = False
+    overwrite = True
 
     list_of_args = sys.argv[1:]
 
@@ -322,6 +333,8 @@ if __name__ == "__main__":
     elif "simulation_with_ind_efield" in list_of_args:
         for type in config.subjects:
             for subject in config.subjects[type]:
+        # type = "AD"
+        # subject=config.subjects[type][0]    
                 run_TMS_EEG_simulations(
                     subject=subject,
                     type=type,
@@ -329,7 +342,7 @@ if __name__ == "__main__":
                     do_resting_state_simulation=do_resting_state_simulation,
                     efield_type="individual",
                 )
-    else:
+else:
         print("Supported options:")
         print(
             "simulation_with_avg_efield: Runs TMS-EGG simulation for each subject using the group averaged TMS efied (using TVB)"

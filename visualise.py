@@ -737,20 +737,42 @@ def _get_evoked_group_averages(dt, efield_type_in_sim):
                 "rb",
             ) as f:
                 data = pkl.load(f)
+                data = np.insert(data, [18, 18], 0, axis=1)
+                
+                
             tms_eeg[type].append(data)
 
         # calculate group average
         tms_eeg_avg[type] = np.average(np.array(tms_eeg[type]), axis=0)
 
-        # make MNE Evoked object
-        biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+        channels_sim = np.load('/home/anujanegi/tj/TMS-simulation/LFM_01_Subject_01_ICBM152_10_10_65_cap_channels (1).npy')
+        
+        channels_all = np.ndarray.tolist(np.insert(channels_sim, 18, ['IO1', 'IO2']))
+        # eeg_data = np.insert(eeg_data, [18, 18], 0, axis=1)
+        # use test_montage to create a montage
+        ICBM = mne.channels.read_custom_montage('/home/anujanegi/tj/TMS-simulation/LFM_01_subject_01_ICBM152_generic_10_10_65_cap.sfp')
+            
+            
         info = mne.create_info(
-            ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+            ch_names=channels_all, sfreq=1000 / dt, ch_types="eeg"
         )
+        
+        # evoked = mne.EvokedArray(eeg_data[900:1500, :].T, info, tmin=-100 / 1000)
+        # tms_eeg_avg = np.insert(tms_eeg_avg, [18, 18], 0, axis=1)
+        
         evoked = mne.EvokedArray(
             tms_eeg_avg[type][900:1500, :].T, info, tmin=-100 / 1000
         )
-        evoked.set_montage(biosemi64_montage)
+        evoked.set_montage(ICBM)
+        # # make MNE Evoked object
+        # biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+        # info = mne.create_info(
+        #     ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+        # )
+        # evoked = mne.EvokedArray(
+        #     tms_eeg_avg[type][900:1500, :].T, info, tmin=-100 / 1000
+        # )
+        # evoked.set_montage(biosemi64_montage)
         tms_eeg_evoked[type] = evoked
 
     return tms_eeg, tms_eeg_evoked
@@ -945,7 +967,7 @@ if __name__ == "__main__":
                 save_name=json_file[:-5],
             )
     elif "TMS_EEG_comparison" in list_of_args:
-        for efield_type_in_sim in ["group_avg", "individual"]:
+        for efield_type_in_sim in ["individual"]:
             for combine in ["mean", "gfp"]:
                 save_path = os.path.join(
                     config.get_analysis_fig_path(),
@@ -957,7 +979,7 @@ if __name__ == "__main__":
                     combine=combine,
                 )
     elif "P30_amplitude_comparison" in list_of_args:
-        for efield_type_in_sim in ["group_avg", "individual"]:
+        for efield_type_in_sim in ["individual"]:
             save_path = os.path.join(
                 config.get_analysis_fig_path(),
                 f"P30 amplitude scatter comparison for {efield_type_in_sim} efield.png",
@@ -966,7 +988,7 @@ if __name__ == "__main__":
                 save_path=save_path, efield_type_in_sim=efield_type_in_sim
             )
     elif "TMS_EEG_for_groups" in list_of_args:
-        for efield_type_in_sim in ["group_avg", "individual"]:
+        for efield_type_in_sim in ["individual"]:
             _, tms_eeg_evoked = _get_evoked_group_averages(
                 dt=1, efield_type_in_sim=efield_type_in_sim
             )
