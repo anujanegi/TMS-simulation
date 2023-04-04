@@ -3,7 +3,8 @@ import os
 data_path = "/media/anujanegi/Anuja Negi/TMS-simulation/data"
 dataset_path = "/media/anujanegi/Anuja Negi/TMS-simulation/data/ADNI"
 subjects = {
-    "AD": ["011_S_4547", "036_S_4715", "041_S_4974", "114_S_6039", "168_S_6142"],
+    "AD": ["114_S_6039", "168_S_6142"], #only for leadfield calculation for now
+        # ["011_S_4547", "036_S_4715", "041_S_4974", "114_S_6039", "168_S_6142"],
     "MCI": ["002_S_1155", "002_S_4229", "002_S_4654", "002_S_1261", "003_S_1122"],
     "HC": ["002_S_0413", "002_S_5178", "002_S_4213", "002_S_1280", "002_S_4799"],
 }
@@ -48,6 +49,8 @@ def get_efield_atlas_avg_path(subject, type, atlas="HCP_MMP1", efield_type="magn
         f"{subject}_efield_over_{atlas}_{efield_type}.json",
     )
 
+def get_leadfield_path(type):
+    return os.path.join(data_path, f"TVB_EducaseAD_molecular_pathways_TVB/_{type}/leadfield.mat")
 
 def get_TMS_efield_path(subject, type):
     return os.path.join(dataset_path, type, subject, "TMS_efield")

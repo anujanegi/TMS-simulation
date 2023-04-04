@@ -215,9 +215,7 @@ def run_TMS_EEG_simulations(
 
     # 5. generate eeg using avg leadfield from Leon
     ## convert to eeg
-    PATH_TO_LEADFIELD = (
-        f"./data/TVB_EducaseAD_molecular_pathways_TVB/_{type}/leadfield.mat"
-    )
+    PATH_TO_LEADFIELD = config.get_leadfield_path(type)
 
     lead_field = sio.loadmat(PATH_TO_LEADFIELD)
     eeg_data = lead_field["lf_sum"].dot(TMS_RAW[:, 0, :, 0].T).T
@@ -234,28 +232,31 @@ def run_TMS_EEG_simulations(
     )
 
     # convert to mne Evoked
-    biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+    eeg_cap = 'easycap64'
+    # eeg_cap = 'biosemi64'
+    # montage = mne.channels.make_standard_montage("biosemi64")
+    montage = mne.channels.read_custom_montage('./Easycap64.txt')
     # plot eeg cap layout
-    f = biosemi64_montage.plot(show_names=True, show=False)
+    f = montage.plot(show_names=True, show=False)
     f.savefig(
         os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"biosemi64_eeg_cap_layout.png",
+            f"{eeg_cap}_eeg_cap_layout.png",
         )
     )
 
     info = mne.create_info(
-        ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+        ch_names=montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
     )
     evoked = mne.EvokedArray(eeg_data[900:1500, :].T, info, tmin=-100 / 1000)
-    evoked.set_montage(biosemi64_montage)
+    evoked.set_montage(montage)
     # save evoked
     pkl.dump(
         evoked,
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(subject, type),
-                f"{type}_{subject}_{efield_type}_efield_Evoked_educase_lf_biosemi64.pkl",
+                f"{type}_{subject}_{efield_type}_efield_Evoked_educase_lf_{eeg_cap}.pkl",
             ),
             "wb",
         ),
@@ -268,7 +269,7 @@ def run_TMS_EEG_simulations(
         title=f"TMS-EEG for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_{efield_type}_efield_eeg_data_educase_lf_biosemi64.png",
+            f"{type}_{subject}_{efield_type}_efield_eeg_data_educase_lf_{eeg_cap}.png",
         ),
     )
 
@@ -277,7 +278,7 @@ def run_TMS_EEG_simulations(
         title=f"Topomap of P30 TEP for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_{efield_type}_efield_P30_topomap_educase_lf_biosemi64.png",
+            f"{type}_{subject}_{efield_type}_efield_P30_topomap_educase_lf_{eeg_cap}.png",
         ),
     )
 
@@ -286,7 +287,7 @@ def run_TMS_EEG_simulations(
         title=f"TMS evoked potential for {type} subject {subject}",
         save_path=os.path.join(
             config.get_TVB_simulation_results_figures_path(subject, type),
-            f"{type}_{subject}_{efield_type}_efield_P30_butterfly_educase_lf_biosemi64.png",
+            f"{type}_{subject}_{efield_type}_efield_P30_butterfly_educase_lf_{eeg_cap}.png",
         ),
     )
 
@@ -309,15 +310,17 @@ if __name__ == "__main__":
                 )
 
     elif "simulation_with_ind_efield" in list_of_args:
-        for type in config.subjects:
-            for subject in config.subjects[type]:
-                run_TMS_EEG_simulations(
-                    subject=subject,
-                    type=type,
-                    overwrite=overwrite,
-                    do_resting_state_simulation=do_resting_state_simulation,
-                    efield_type="individual",
-                )
+        type='AD'
+        subject=config.subjects[type][0]
+        # for type in config.subjects:
+            # for subject in config.subjects[type]:
+        run_TMS_EEG_simulations(
+            subject=subject,
+            type=type,
+            overwrite=overwrite,
+            do_resting_state_simulation=do_resting_state_simulation,
+            efield_type="individual",
+        )
     else:
         print("Supported options:")
         print(
