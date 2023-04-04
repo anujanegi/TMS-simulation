@@ -96,6 +96,8 @@ def run_TMS_EEG_simulations(
         neuron_model.a_2 = np.array([0.8])
         neuron_model.a_3 = np.array([0.25])
         neuron_model.a_4 = np.array([0.25])
+        # neuron_model.nu_max = np.array([0.005])  #maximum firing rate of the neural population
+        neuron_model.r = np.array([0.6])  #Steepness of the sigmoidal transformation
 
         # 2. use group avg TMS efield as stimulus to TVB
         # using HCP MMP1 atlas
@@ -116,10 +118,11 @@ def run_TMS_EEG_simulations(
                 for area in white_matter.region_labels
             ]
         )
-
+        max = np.max(electric_field_strength)
+        electric_field_strength = [i if i>.53*max else 0 for i in electric_field_strength] #cut off values below 83% of max
         coil = TMS_coil(type="fig8")
         field_scale = 5e1  # TODO: variable scaling
-        electric_field_strength = electric_field_strength * field_scale
+        electric_field_strength = np.asarray(electric_field_strength) * field_scale
         coil.get_stimulus_distribution(
             electric_field_strength, white_matter.region_labels
         )
@@ -164,7 +167,7 @@ def run_TMS_EEG_simulations(
             stimulus=stimulus,
         )
         tms_sim.configure()
-        tms_sim.coupling.a = np.array([0])
+        tms_sim.coupling.a = np.array([.4])
         tms_sim.connectivity.speed = np.array([3.0])
         tms_sim.configure()
         tms_data = run_simulation(tms_sim, duration, ["raw"])
@@ -213,12 +216,9 @@ def run_TMS_EEG_simulations(
 
     # 5. generate eeg using avg leadfield from Leon
     ## convert to eeg
-    PATH_TO_LEADFIELD = os.path.join(
-        config.data_path,
-        "TVB_EducaseAD_molecular_pathways_TVB",
-        f"_{type}",
-        "leadfield.mat",
-    )
+
+    PATH_TO_LEADFIELD = (
+        f"/media/anujanegi/Anuja Negi/TMS-simulation/data/TVB_EducaseAD_molecular_pathways_TVB/_{type}/leadfield.mat")
 
     lead_field = sio.loadmat(PATH_TO_LEADFIELD)
     eeg_data = lead_field["lf_sum"].dot(TMS_RAW[:, 0, :, 0].T).T
@@ -304,7 +304,7 @@ def run_TMS_EEG_simulations(
 
 if __name__ == "__main__":
     do_resting_state_simulation = False
-    overwrite = False
+    overwrite = True
 
     list_of_args = sys.argv[1:]
 
@@ -320,15 +320,17 @@ if __name__ == "__main__":
                 )
 
     elif "simulation_with_ind_efield" in list_of_args:
-        for type in config.subjects:
-            for subject in config.subjects[type]:
-                run_TMS_EEG_simulations(
-                    subject=subject,
-                    type=type,
-                    overwrite=overwrite,
-                    do_resting_state_simulation=do_resting_state_simulation,
-                    efield_type="individual",
-                )
+        # for type in config.subjects:
+        type='AD'
+        subject=config.subjects[type][0]
+            # for subject in config.subjects[type]:
+        run_TMS_EEG_simulations(
+            subject=subject,
+            type=type,
+            overwrite=overwrite,
+            do_resting_state_simulation=do_resting_state_simulation,
+            efield_type="individual",
+        )
     else:
         print("Supported options:")
         print(
