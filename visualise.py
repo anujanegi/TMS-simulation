@@ -17,6 +17,7 @@ import utils.utils as utils
 import pickle as pkl
 import mne
 import seaborn as sns
+from itertools import combinations
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -823,6 +824,49 @@ def plot_LFP_on_atlas(
     )
 
 
+def plot_structural_connectivity_diff_in_groups(save_path=None):
+    avg_SC = {}
+    for type in config.subjects.keys():
+        weights_in_group = []
+        for subject in config.subjects[type]:
+            PATH_TO_SC = config.get_subject_structural_connectivity_path(subject, type)
+            weights = np.log(np.loadtxt(PATH_TO_SC) + 1)
+            weights = (weights - np.min(weights)) / (np.max(weights) - np.min(weights))
+            weights_in_group.append(weights)
+
+        avg_weight = np.mean(weights_in_group, axis=0)
+        avg_SC[type] = avg_weight
+
+        plt.figure()
+        plt.imshow(np.asarray(avg_weight))
+        plt.colorbar()
+        plt.title(f"Averaged normalised SC for {type}")
+        plt.xlabel("Region")
+        plt.ylabel("Region")
+        if save_path:
+            plt.savefig(save_path + f"/{type}_SC.png", transparent=True)
+            print("Saved to", save_path + f"/{type}_SC.png")
+
+    # plotting group difference
+    subject_type_combinations = list(combinations(config.subjects.keys(), 2))
+    for combination in subject_type_combinations:
+        plt.figure()
+        plt.imshow(avg_SC[combination[0]] - avg_SC[combination[1]])
+        plt.colorbar()
+        plt.title(f"Difference in SC between {combination[0]} and {combination[1]}")
+        plt.xlabel("Region")
+        plt.ylabel("Region")
+        if save_path:
+            plt.savefig(
+                save_path + f"/{combination[0]}-{combination[1]}_SC_diff.png",
+                transparent=True,
+            )
+            print(
+                "Saved to",
+                save_path + f"/{combination[0]}-{combination[1]}_SC_diff.png",
+            )
+
+
 if __name__ == "__main__":
 
     list_of_args = sys.argv[1:]
@@ -1009,6 +1053,10 @@ if __name__ == "__main__":
                     title=f"Local field potential at {name} ",
                     time=time,
                 )
+    elif "plot_structural_connectivity_diff_in_groups" in list_of_args:
+        plot_structural_connectivity_diff_in_groups(
+            save_path=config.get_analysis_fig_path()
+        )
 
     else:
         print("Supported options:")
@@ -1044,4 +1092,7 @@ if __name__ == "__main__":
         )
         print(
             "LFP_on_atlas_for_groups: plots the LFP on the atlas for all groups in a single plot (for individual efield simulaions)"
+        )
+        print(
+            "plot_structural_connectivity_diff_in_groups: plots the difference in structural connectivity between groups"
         )
