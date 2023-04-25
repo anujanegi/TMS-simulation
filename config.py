@@ -58,11 +58,11 @@ def get_subject_path(subject, type):
 
 
 def get_analysis_data_path():
-    return os.path.join(dataset_path, "analysis", "data")
+    return os.path.join(dataset_path, "analysis", "data", "group_ana_with_cutoff")
 
 
 def get_analysis_fig_path():
-    return os.path.join(dataset_path, "analysis", "figures")
+    return os.path.join(dataset_path, "analysis", "figures", "group_ana_with_cutoff")
 
 
 def get_glasser_msh_path():
@@ -103,17 +103,30 @@ def get_group_average_efield_over_atlas_path(
     )
 
 
-def get_TVB_simulation_results_path(subject, type):
-    path = os.path.join(dataset_path, type, subject, "TVB_simulation_results", "cut_off_stim")
+def get_TVB_simulation_results_path(subject, type, gc):
+    path = os.path.join(
+        dataset_path,
+        type,
+        subject,
+        "TVB_simulation_results",
+        "group_ana_with_cutoff",
+        "gc_%.2f" % gc,
+    )
     if not os.path.exists(path):
         os.makedirs(path)
 
     return path
 
 
-def get_TVB_simulation_results_figures_path(subject, type):
+def get_TVB_simulation_results_figures_path(subject, type, gc):
     path = os.path.join(
-        dataset_path, type, subject, "TVB_simulation_results", "figures", "cut_off_stim"
+        dataset_path,
+        type,
+        subject,
+        "TVB_simulation_results",
+        "figures",
+        "group_ana_with_cutoff",
+        "gc_%.2f" % gc,
     )
     if not os.path.exists(path):
         os.makedirs(path)
