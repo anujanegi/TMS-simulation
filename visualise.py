@@ -722,7 +722,7 @@ def plot_TEP_butterfly(evoked, title, save_path=None, times=np.array([0.03])):
         fig.savefig(save_path, transparent=True)
 
 
-def _get_evoked_group_averages(dt, efield_type_in_sim):
+def _get_evoked_group_averages(dt, efield_type_in_sim, **kwargs):
     tms_eeg = {}
     tms_eeg_avg = {}
     tms_eeg_evoked = {}
@@ -732,7 +732,7 @@ def _get_evoked_group_averages(dt, efield_type_in_sim):
         for subject in config.subjects[type]:
             with open(
                 os.path.join(
-                    config.get_TVB_simulation_results_path(subject, type),
+                    config.get_TVB_simulation_results_path(subject, type, **kwargs),
                     f"{type}_{subject}_{efield_type_in_sim}_efield_eeg_data_educase_lf.pkl",
                 ),
                 "rb",
@@ -758,9 +758,9 @@ def _get_evoked_group_averages(dt, efield_type_in_sim):
 
 
 def plot_TMS_EEG_comparison(
-    dt=1, save_path=None, efield_type_in_sim="individual", combine="mean"
+    dt=1, save_path=None, efield_type_in_sim="individual", combine="mean", **kwargs
 ):
-    _, tms_eeg_evoked = _get_evoked_group_averages(dt, efield_type_in_sim)
+    _, tms_eeg_evoked = _get_evoked_group_averages(dt, efield_type_in_sim, **kwargs)
     fig, ax = plt.subplots(1, figsize=(10, 5))
     ax.axvline(30, color="r", linestyle="--", label="P30")
     fig.legend()
@@ -781,9 +781,9 @@ def plot_TMS_EEG_comparison(
 
 
 def plot_P30_amplitude_comparison(
-    dt=1, save_path=None, efield_type_in_sim="individual"
+    dt=1, save_path=None, efield_type_in_sim="individual", **kwargs
 ):
-    tms_eeg, _ = _get_evoked_group_averages(dt, efield_type_in_sim)
+    tms_eeg, _ = _get_evoked_group_averages(dt, efield_type_in_sim, **kwargs)
 
     subjects = sum([config.subjects[type] for type in config.subjects], [])
     types = []
@@ -989,35 +989,49 @@ if __name__ == "__main__":
                 save_name=json_file[:-5],
             )
     elif "TMS_EEG_comparison" in list_of_args:
+        gc = 0.88
+        experiment = "ind_efield_without_cutoff"
         for efield_type_in_sim in ["group_avg", "individual"]:
             for combine in ["mean", "gfp"]:
                 save_path = os.path.join(
                     config.get_analysis_fig_path(),
-                    f"{str(combine).title()} TMS-EEG comparison for {efield_type_in_sim} efield.png",
+                    f"{str(combine).title()} TMS-EEG comparison for {efield_type_in_sim} efield_gc_{gc}.png",
                 )
                 plot_TMS_EEG_comparison(
                     save_path=save_path,
                     efield_type_in_sim=efield_type_in_sim,
                     combine=combine,
+                    gc=gc,
+                    experiment=experiment,
                 )
     elif "P30_amplitude_comparison" in list_of_args:
         for efield_type_in_sim in ["group_avg", "individual"]:
+            gc = 0.88
+            experiment = "ind_efield_without_cutoff"
             save_path = os.path.join(
                 config.get_analysis_fig_path(),
-                f"P30 amplitude scatter comparison for {efield_type_in_sim} efield.png",
+                f"P30 amplitude scatter comparison for {efield_type_in_sim} efield_gc_{gc}.png",
             )
             plot_P30_amplitude_comparison(
-                save_path=save_path, efield_type_in_sim=efield_type_in_sim
+                save_path=save_path,
+                efield_type_in_sim=efield_type_in_sim,
+                gc=gc,
+                experiment=experiment,
             )
     elif "TMS_EEG_for_groups" in list_of_args:
         for efield_type_in_sim in ["group_avg", "individual"]:
+            gc = 0.88
+            experiment = "ind_efield_without_cutoff"
             _, tms_eeg_evoked = _get_evoked_group_averages(
-                dt=1, efield_type_in_sim=efield_type_in_sim
+                dt=1,
+                efield_type_in_sim=efield_type_in_sim,
+                gc=gc,
+                experiment=experiment,
             )
             for type in config.subjects:
                 save_path = os.path.join(
                     config.get_analysis_fig_path(),
-                    f"TMS-EEG_{type}_{efield_type_in_sim}_efield.png",
+                    f"TMS-EEG_{type}_{efield_type_in_sim}_efield_gc_{gc}.png",
                 )
 
                 plot_TEP_butterfly(
