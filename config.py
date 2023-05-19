@@ -103,19 +103,38 @@ def get_group_average_efield_over_atlas_path(
     )
 
 
-def get_TVB_simulation_results_path(subject, type):
-    path = os.path.join(dataset_path, type, subject, "TVB_simulation_results", "cut_off_stim")
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    return path
-
-
-def get_TVB_simulation_results_figures_path(subject, type):
+def get_TVB_simulation_results_path(
+    subject, type, experiment="group_ana_with_cutoff", gc=0.0
+):
     path = os.path.join(
-        dataset_path, type, subject, "TVB_simulation_results", "figures", "cut_off_stim"
+        dataset_path, type, subject, "TVB_simulation_results", experiment, f"gc_{gc}"
     )
     if not os.path.exists(path):
         os.makedirs(path)
 
     return path
+
+
+def get_TVB_simulation_results_figures_path(
+    subject, type, experiment="group_ana_with_cutoff", gc=0.0
+):
+    path = os.path.join(
+        dataset_path,
+        type,
+        subject,
+        "TVB_simulation_results",
+        "figures",
+        experiment,
+        f"gc_{gc}",
+    )
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
+
+
+# results path for TVB simulation results
+# with individual subject efield and TMS efield cutoff: group_ana_with_cutoff
+# with group average efield and TMS efield cutoff: group_avg_efield_with_cutoff
+# with group average efield and no cutoff: group_ana_without_cutoff
+# with individual subject efield and no cuttoff: ind_efield_without_cutoff
