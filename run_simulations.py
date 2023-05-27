@@ -37,7 +37,7 @@ def run_TMS_EEG_simulations(
     # check if simulation results already exist
     if not overwrite and os.path.isfile(
         os.path.join(
-            config.get_TVB_simulation_results_path(subject, type, global_coupling),
+            config.get_TVB_simulation_results_path(subject, type, gc=global_coupling),
             f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
         )
     ):
@@ -52,7 +52,7 @@ def run_TMS_EEG_simulations(
             open(
                 os.path.join(
                     config.get_TVB_simulation_results_path(
-                        subject, type, global_coupling
+                        subject, type, gc=global_coupling
                     ),
                     f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
                 ),
