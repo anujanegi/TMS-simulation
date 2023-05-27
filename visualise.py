@@ -513,6 +513,7 @@ def _plot_msh(
 
     p = pv.Plotter(window_size=[800, 800], off_screen=True)
     sargs = {"color": "black", "title": title}
+
     for mesh in meshes:
         p.add_mesh(
             mesh, scalars=scalar_name, clim=limit, cmap=cmap, scalar_bar_args=sargs
@@ -608,7 +609,7 @@ def plot_magnE_on_subject(subject, type, limit):
     _plot_msh(
         [mesh],
         "magnE",
-        title=f"E-field magnitude",
+        title=f"E-field magnitude (V/m)",
         plot_args={
             "limit": limit,
             "cmap": "rainbow",
@@ -626,7 +627,7 @@ def plot_magnE_on_atlas(subject, type, atlas_name="HCP_MMP1", limit=None):
         efield_avg_atlas = json.load(f)
     _plot_efield_HCP_MMP1_atlas(
         efield_avg_atlas,
-        title=f"E-field magnitude",
+        title=f"E-field magnitude (V/m)",
         plot_args={"limit": limit, "cmap": "rainbow"},
         save_path=config.get_TMS_efield_path(subject, type),
         save_name=f"{subject} magnE over {atlas_name}",
@@ -639,7 +640,7 @@ def plot_magnE_on_fsaverage(subject, type, limit):
     _plot_msh(
         [mesh],
         "magnE",
-        title="E-field magnitude",
+        title="E-field magnitude (V/m)",
         save_path=config.get_TMS_efield_path(subject, type),
         save_name=f"{subject} magnE on fsaverage",
         plot_args={
