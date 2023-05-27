@@ -18,6 +18,7 @@ import pickle as pkl
 import mne
 import seaborn as sns
 from itertools import combinations
+plt.rcParams.update({'font.size': 14})
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -841,30 +842,33 @@ def plot_structural_connectivity_diff_in_groups(save_path=None):
         plt.figure()
         plt.imshow(np.asarray(avg_weight))
         plt.colorbar()
-        plt.title(f"Averaged normalised SC for {type}")
-        plt.xlabel("Region")
-        plt.ylabel("Region")
+        plt.title(f"SC for {type}")
+        plt.xlabel("Regions")
+        plt.ylabel("Regions")
         if save_path:
             plt.savefig(save_path + f"/{type}_SC.png", transparent=True)
             print("Saved to", save_path + f"/{type}_SC.png")
 
     # plotting group difference
+    #set colot limit to be the same for all plots
     subject_type_combinations = list(combinations(config.subjects.keys(), 2))
+    all_differences = np.concatenate([avg_SC[combination[1]] - avg_SC[combination[0]] for combination in subject_type_combinations])
+    clim = [np.min(all_differences), np.max(all_differences)]
     for combination in subject_type_combinations:
         plt.figure()
-        plt.imshow(avg_SC[combination[0]] - avg_SC[combination[1]])
+        plt.imshow(avg_SC[combination[1]] - avg_SC[combination[0]], clim=clim)
         plt.colorbar()
-        plt.title(f"Difference in SC between {combination[0]} and {combination[1]}")
-        plt.xlabel("Region")
-        plt.ylabel("Region")
+        plt.title(f"{combination[1]} minus {combination[0]}")
+        plt.xlabel("Regions")
+        plt.ylabel("Regions")
         if save_path:
             plt.savefig(
-                save_path + f"/{combination[0]}-{combination[1]}_SC_diff.png",
+                save_path + f"/{combination[1]}-{combination[0]}_SC_diff.png",
                 transparent=True,
             )
             print(
                 "Saved to",
-                save_path + f"/{combination[0]}-{combination[1]}_SC_diff.png",
+                save_path + f"/{combination[1]}-{combination[0]}_SC_diff.png",
             )
 
 
