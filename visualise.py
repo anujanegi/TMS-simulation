@@ -905,7 +905,7 @@ if __name__ == "__main__":
                 _plot_msh(
                     [pv.read(mesh)],
                     stat,
-                    title=f"{stat} of Efield",
+                    title=f"{stat} of Efield (V/m)",
                     save_name=f"{efield_type}_{stat}_{type}_fsavg",
                     save_path=config.get_analysis_fig_path(),
                     plot_args={
@@ -936,7 +936,7 @@ if __name__ == "__main__":
                     efield_atlas = json.load(f)
                 _plot_efield_HCP_MMP1_atlas(
                     efield_atlas,
-                    title=f"{stat} of Efield",
+                    title=f"{stat} of Efield (V/m)",
                     plot_args={"limit": limit, "cmap": "rainbow"},
                     save_path=config.get_analysis_fig_path(),
                     save_name=f"{efield_type}_{stat}_{type}_HCP_MMP1",
@@ -954,7 +954,7 @@ if __name__ == "__main__":
             _plot_msh(
                 [pv.read(os.path.join(config.get_analysis_data_path(), mesh))],
                 mesh[:-10],
-                title=f"Efield difference",
+                title=f"Efield difference (V/m)",
                 save_name=mesh[:-4],
                 save_path=config.get_analysis_fig_path(),
                 plot_args={
@@ -984,7 +984,7 @@ if __name__ == "__main__":
                 efield_atlas = json.load(f)
             _plot_efield_HCP_MMP1_atlas(
                 efield_atlas,
-                title=f"Efield difference",
+                title=f"Efield difference V/m)",
                 plot_args={"limit": limit, "cmap": "seismic"},
                 save_path=config.get_analysis_fig_path(),
                 save_name=json_file[:-5],
