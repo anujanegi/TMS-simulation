@@ -18,7 +18,8 @@ import pickle as pkl
 import mne
 import seaborn as sns
 from itertools import combinations
-plt.rcParams.update({'font.size': 14})
+
+plt.rcParams.update({"font.size": 14})
 
 
 def plot_coil_shape(x_positions, y_positions, coil_type=""):
@@ -765,6 +766,7 @@ def plot_TMS_EEG_comparison(
     _, tms_eeg_evoked = _get_evoked_group_averages(dt, efield_type_in_sim, **kwargs)
     fig, ax = plt.subplots(1, figsize=(10, 5))
     ax.axvline(30, color="r", linestyle="--", label="P30")
+    ax.axvline(0, color="black", linestyle="--", label="stimulus onset")
     fig.legend()
     title_ = "Global Field Power" if combine == "gfp" else str(combine).title()
 
@@ -774,7 +776,9 @@ def plot_TMS_EEG_comparison(
         time_unit="ms",
         title=f"{title_} of TMS-EEG (using {efield_type_in_sim} efield)",
         axes=ax,
-        show_sensors="upper right",
+        # show_sensors="upper center",
+        show_sensors=False,
+        legend="upper right",
         show=False,
     )
     if save_path:
@@ -800,12 +804,17 @@ def plot_P30_amplitude_comparison(
     df = pd.DataFrame(
         {"subject_ID": subjects, "Diagnosis": types, "P30_amplitude": P30_amplitude}
     )
+
+    plt.figure()
     sns_plot = sns.scatterplot(
         data=df, x="Diagnosis", y="P30_amplitude", hue="Diagnosis"
     )
-    plt.title(
-        f"P30 amplitude from average of all electrodes ({efield_type_in_sim} efield used)"
-    )
+    plt.tight_layout()
+    # plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    # sns.set_context("poster")
+    # plt.title(
+    # f"P30 amplitude from average of all electrodes ({efield_type_in_sim} efield used)"
+    # )
     fig = sns_plot.get_figure()
     if save_path:
         fig.savefig(save_path, transparent=True)
@@ -850,9 +859,14 @@ def plot_structural_connectivity_diff_in_groups(save_path=None):
             print("Saved to", save_path + f"/{type}_SC.png")
 
     # plotting group difference
-    #set colot limit to be the same for all plots
+    # set colot limit to be the same for all plots
     subject_type_combinations = list(combinations(config.subjects.keys(), 2))
-    all_differences = np.concatenate([avg_SC[combination[1]] - avg_SC[combination[0]] for combination in subject_type_combinations])
+    all_differences = np.concatenate(
+        [
+            avg_SC[combination[1]] - avg_SC[combination[0]]
+            for combination in subject_type_combinations
+        ]
+    )
     clim = [np.min(all_differences), np.max(all_differences)]
     for combination in subject_type_combinations:
         plt.figure()
