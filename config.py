@@ -138,3 +138,4 @@ def get_TVB_simulation_results_figures_path(
 # with group average efield and TMS efield cutoff: group_avg_efield_with_cutoff
 # with group average efield and no cutoff: group_ana_without_cutoff
 # with individual subject efield and no cuttoff: ind_efield_without_cutoff
+# with individual subject efield and no TMS efield cutoff and individually calculated downsampled lf: test_new_lf

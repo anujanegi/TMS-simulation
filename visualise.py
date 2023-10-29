@@ -736,7 +736,7 @@ def _get_evoked_group_averages(dt, efield_type_in_sim, **kwargs):
             with open(
                 os.path.join(
                     config.get_TVB_simulation_results_path(subject, type, **kwargs),
-                    f"{type}_{subject}_{efield_type_in_sim}_efield_eeg_data_educase_lf.pkl",
+                    f"{type}_{subject}_{efield_type_in_sim}_efield_eeg_data_downsampled_lf.pkl",
                 ),
                 "rb",
             ) as f:
@@ -748,9 +748,13 @@ def _get_evoked_group_averages(dt, efield_type_in_sim, **kwargs):
 
         # make MNE Evoked object
         biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
-        info = mne.create_info(
-            ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
-        )
+        # info = mne.create_info(
+        #     ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+        # )
+        ch_type = ["eeg" for i in range(len(biosemi64_montage.ch_names))]
+        ch_type[-3:] = ["misc", "misc", "misc"] # needed for caps which include lpa, rpa and nza "channels" at the end
+        info = mne.create_info(ch_names = biosemi64_montage.ch_names[:-3], sfreq =1000 / dt, ch_types = ch_type[:-3])
+
         evoked = mne.EvokedArray(
             tms_eeg_avg[type][900:1500, :].T, info, tmin=-100 / 1000
         )
@@ -1009,12 +1013,12 @@ if __name__ == "__main__":
             )
     elif "TMS_EEG_comparison" in list_of_args:
         gc = 0.88
-        experiment = "ind_efield_without_cutoff"
-        for efield_type_in_sim in ["group_avg", "individual"]:
+        experiment = "test_new_lf"
+        for efield_type_in_sim in ["individual"]:
             for combine in ["mean", "gfp"]:
                 save_path = os.path.join(
                     config.get_analysis_fig_path(),
-                    f"{str(combine).title()} TMS-EEG comparison for {efield_type_in_sim} efield_gc_{gc}.png",
+                    f"{str(combine).title()} TMS-EEG comparison for {efield_type_in_sim} efield_gc_{gc}_{experiment}.png",
                 )
                 plot_TMS_EEG_comparison(
                     save_path=save_path,
@@ -1024,12 +1028,12 @@ if __name__ == "__main__":
                     experiment=experiment,
                 )
     elif "P30_amplitude_comparison" in list_of_args:
-        for efield_type_in_sim in ["group_avg", "individual"]:
+        for efield_type_in_sim in ["individual"]:
             gc = 0.88
-            experiment = "ind_efield_without_cutoff"
+            experiment = "test_new_lf"
             save_path = os.path.join(
                 config.get_analysis_fig_path(),
-                f"P30 amplitude scatter comparison for {efield_type_in_sim} efield_gc_{gc}.png",
+                f"P30 amplitude scatter comparison for {efield_type_in_sim} efield_gc_{gc}_{experiment}.png",
             )
             plot_P30_amplitude_comparison(
                 save_path=save_path,

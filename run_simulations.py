@@ -24,6 +24,7 @@ def run_TMS_EEG_simulations(
     dt=1,
     global_coupling=0.0,
     plotting=True,
+    experiment="group_ana_with_cutoff",
 ):
     """
     runs TVB simulation for each subject :
@@ -37,7 +38,7 @@ def run_TMS_EEG_simulations(
     # check if simulation results already exist
     if not overwrite and os.path.isfile(
         os.path.join(
-            config.get_TVB_simulation_results_path(subject, type, gc=global_coupling),
+            config.get_TVB_simulation_results_path(subject, type, gc=global_coupling, experiment=experiment),
             f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
         )
     ):
@@ -52,7 +53,7 @@ def run_TMS_EEG_simulations(
             open(
                 os.path.join(
                     config.get_TVB_simulation_results_path(
-                        subject, type, gc=global_coupling
+                        subject, type, gc=global_coupling, experiment=experiment
                     ),
                     f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
                 ),
@@ -185,14 +186,14 @@ def run_TMS_EEG_simulations(
         if do_resting_state_simulation:
             filename = os.path.join(
                 config.get_TVB_simulation_results_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
                 f"{type}_{subject}_{efield_type}_efield_resting_state_simulation.pkl",
             )
             pkl.dump(rs_data, open(filename, "wb"))
 
         filename = os.path.join(
-            config.get_TVB_simulation_results_path(subject, type, gc=global_coupling),
+            config.get_TVB_simulation_results_path(subject, type, gc=global_coupling, experiment=experiment),
             f"{type}_{subject}_{efield_type}_efield_tms_simulation.pkl",
         )
         pkl.dump(tms_data, open(filename, "wb"))
@@ -207,7 +208,7 @@ def run_TMS_EEG_simulations(
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
                 f"{type}_{subject}_{efield_type}_efield_P30_amplitude.pkl",
             ),
@@ -223,7 +224,7 @@ def run_TMS_EEG_simulations(
             plot_args={"title": f"LFP for {type}({subject})", "xlim": [900, 1500]},
             save_path=os.path.join(
                 config.get_TVB_simulation_results_figures_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
                 f"{type}_{subject}_{efield_type}_efield_lfp.png",
             ),
@@ -232,19 +233,26 @@ def run_TMS_EEG_simulations(
     # 5. generate eeg using avg leadfield from Leon
     ## convert to eeg
 
-    PATH_TO_LEADFIELD = f"/media/anujanegi/Anuja Negi/TMS-simulation/data/TVB_EducaseAD_molecular_pathways_TVB/_{type}/leadfield.mat"
-
-    lead_field = sio.loadmat(PATH_TO_LEADFIELD)
-    eeg_data = lead_field["lf_sum"].dot(TMS_RAW[:, 0, :, 0].T).T
+    # using group averaged leadfield from educase of Stefanovski 2019
+    # lf_name = "educase_lf"
+    # PATH_TO_LEADFIELD = f"/media/anujanegi/Anuja Negi/TMS-simulation/data/TVB_EducaseAD_molecular_pathways_TVB/_{type}/leadfield.mat"
+    # lead_field = sio.loadmat(PATH_TO_LEADFIELD)["lf_sum"]
+    
+    # using downsampled leadfield calculated using leadfields calculated by Paul
+    lf_name = "downsampled_lf"
+    PATH_TO_LEADFIELD = os.path.join(config.get_subject_path(subject=subject, type=type), 'TVBInput', f'{subject}_leadfield_glasser_downsampled.npy')
+    lead_field = np.load(PATH_TO_LEADFIELD)
+    
+    eeg_data = lead_field.dot(TMS_RAW[:, 0, :, 0].T).T
     # save eeg data
     pkl.dump(
         eeg_data,
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
-                f"{type}_{subject}_{efield_type}_efield_eeg_data_educase_lf.pkl",
+                f"{type}_{subject}_{efield_type}_efield_eeg_data_{lf_name}.pkl",
             ),
             "wb",
         ),
@@ -252,6 +260,7 @@ def run_TMS_EEG_simulations(
 
     # convert to mne Evoked
     biosemi64_montage = mne.channels.make_standard_montage("biosemi64")
+    
     # plot eeg cap layout
     f = biosemi64_montage.plot(show_names=True, show=False)
     if plotting:
@@ -264,9 +273,14 @@ def run_TMS_EEG_simulations(
             )
         )
 
-    info = mne.create_info(
-        ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
-    )
+    # info = mne.create_info(
+    #     ch_names=biosemi64_montage.ch_names, sfreq=1000 / dt, ch_types="eeg"
+    # )
+    
+    ch_type = ["eeg" for i in range(len(biosemi64_montage.ch_names))]
+    ch_type[-3:] = ["misc", "misc", "misc"] # needed for caps which include lpa, rpa and nza "channels" at the end
+    info = mne.create_info(ch_names = biosemi64_montage.ch_names[:-3], sfreq =1000 / dt, ch_types = ch_type[:-3])
+
     evoked = mne.EvokedArray(eeg_data[900:1500, :].T, info, tmin=-100 / 1000)
     evoked.set_montage(biosemi64_montage)
     # save evoked
@@ -275,9 +289,9 @@ def run_TMS_EEG_simulations(
         open(
             os.path.join(
                 config.get_TVB_simulation_results_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
-                f"{type}_{subject}_{efield_type}_efield_Evoked_educase_lf_biosemi64.pkl",
+                f"{type}_{subject}_{efield_type}_efield_Evoked_{lf_name}_biosemi64.pkl",
             ),
             "wb",
         ),
@@ -291,9 +305,9 @@ def run_TMS_EEG_simulations(
             title=f"TMS-EEG for {type} subject {subject}",
             save_path=os.path.join(
                 config.get_TVB_simulation_results_figures_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
-                f"{type}_{subject}_{efield_type}_efield_eeg_data_educase_lf_biosemi64.png",
+                f"{type}_{subject}_{efield_type}_efield_eeg_data_{lf_name}_biosemi64.png",
             ),
         )
 
@@ -302,9 +316,9 @@ def run_TMS_EEG_simulations(
             title=f"Topomap of P30 TEP for {type} subject {subject}",
             save_path=os.path.join(
                 config.get_TVB_simulation_results_figures_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
-                f"{type}_{subject}_{efield_type}_efield_P30_topomap_educase_lf_biosemi64.png",
+                f"{type}_{subject}_{efield_type}_efield_P30_topomap_{lf_name}_biosemi64.png",
             ),
         )
 
@@ -313,9 +327,9 @@ def run_TMS_EEG_simulations(
             title=f"TMS evoked potential for {type} subject {subject}",
             save_path=os.path.join(
                 config.get_TVB_simulation_results_figures_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
-                f"{type}_{subject}_{efield_type}_efield_P30_butterfly_educase_lf_biosemi64.png",
+                f"{type}_{subject}_{efield_type}_efield_P30_butterfly_{lf_name}_biosemi64.png",
             ),
         )
 
@@ -325,9 +339,9 @@ def run_TMS_EEG_simulations(
             title=f"TMS evoked potential for {type} subject {subject}",
             save_path=os.path.join(
                 config.get_TVB_simulation_results_figures_path(
-                    subject, type, gc=global_coupling
+                    subject, type, gc=global_coupling, experiment=experiment
                 ),
-                f"{type}_{subject}_{efield_type}_efield_TEP_butterfly_educase_lf_biosemi64.png",
+                f"{type}_{subject}_{efield_type}_efield_TEP_butterfly_{lf_name}_biosemi64.png",
             ),
         )
 
@@ -361,6 +375,19 @@ if __name__ == "__main__":
             do_resting_state_simulation=do_resting_state_simulation,
             efield_type="individual",
         )
+        
+    elif "test" in list_of_args:
+        for type in config.subjects:
+            for subject in config.subjects[type]:                    
+                run_TMS_EEG_simulations(
+                    subject=subject,
+                    type=type,
+                    overwrite=True,
+                    do_resting_state_simulation=do_resting_state_simulation,
+                    efield_type="individual",
+                    global_coupling=0.88,
+                    experiment="test_new_lf",
+                )
 
     else:
         print("Supported options:")
